@@ -1,0 +1,19 @@
+{% macro render_task(task) %}
+<!-- This macro is used to render a task and its subtasks, recursively for infinite levels. 
+The recommended level is 2 levels deep only (task and subtask).
+-->
+<div class="task-item">
+    <label>
+        <input type="checkbox" name="task_{{ task.id }}" {% if task.completed %} checked {% endif %}>
+        {{ task.name }}
+    </label>
+</div>
+{% if task.subtasks %}
+<ul class="subtask-list">
+    {% for subtask in task.subtasks %}
+    {{ render_task(subtask) }}
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% endmacro %}
