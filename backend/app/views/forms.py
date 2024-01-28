@@ -33,12 +33,12 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField("Register")
 
     def validate_username(form, username):
-        user = select(User).where(username=username.data).first()
+        user = db.session.scalar(sa.select(User).where(User.username == username.data))
         if user:
             raise ValidationError("Username already exists")
 
     def validate_email(form, email):
-        user = select(User).where(email=email.data).first()
+        user = db.session.scalar(sa.select(User).where(User.username == username.data))
         if user:
             raise ValidationError("Email already exists")
 
@@ -57,3 +57,22 @@ class RegistrationForm(FlaskForm):
             raise ValidationError(
                 "The password must contain at least one special character."
             )
+
+
+class LoginForm(FlaskForm):
+    username = StringField(
+        "Username",
+        validators=[
+            InputRequired(),
+            Length(min=4, max=32),
+        ],
+    )
+    password = PasswordField(
+        "Password",
+        validators=[
+            InputRequired(),
+            Length(min=8, max=32),
+        ],
+    )
+    remember_me = BooleanField("Remember me")
+    submit = SubmitField("Login")
