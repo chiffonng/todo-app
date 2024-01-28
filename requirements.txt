@@ -1,4 +1,7 @@
 Flask>=3.0.1
 Flask-SQLAlchemy>=3.1.1
+Flask-Migrate>=4.0.5
 python-dotenv>=0.17.0
-pytest>=6.2.4
+pytest>=8.0.0
+SQLAlchemy>2.0.0
+wtforms[email]>=3.1.2

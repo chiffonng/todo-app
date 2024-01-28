@@ -33,12 +33,12 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField("Register")
 
     def validate_username(form, username):
-        user = User.query.filter_by(username=username.data).first()
+        user = select(User).where(username=username.data).first()
         if user:
             raise ValidationError("Username already exists")
 
     def validate_email(form, email):
-        user = User.query.filter_by(email=email.data).first()
+        user = select(User).where(email=email.data).first()
         if user:
             raise ValidationError("Email already exists")
 

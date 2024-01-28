@@ -6,4 +6,5 @@ load_dotenv(os.path.join(base_dir, ".env"))
 
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY") or "admin-hash-key"
+    SECRET_KEY = os.environ.get("SECRET_KEY")
+    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.environ.get("DATABASE_URL")
