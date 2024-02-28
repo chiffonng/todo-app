@@ -1,15 +1,30 @@
-from flask import Flask, render_template
+from flask import Flask
 from flask_login import LoginManager
-from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
 from .config import Config
 
-app = Flask(__name__)
-app.config.from_object(Config)
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-login = LoginManager(app)
+db = SQLAlchemy()
+login_manager = LoginManager()
 
-from app.models import models
-from app.views import forms, auth, todo, errors
+
+def create_app(test_config=None):
+    app = Flask(__name__)
+    app.config.from_object(Config)
+
+    # Override config with test config if passed
+    if test_config:
+        app.config.update(test_config)
+
+    # Bind extensions to the app
+    db.init_app(app)
+    login_manager.init_app(app)
+
+    with app.app_context():
+        db.create_all()
+
+    @app.route("/")
+    def index():
+        return "Welcome to the backend!"
+
+    return app
