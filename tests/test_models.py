@@ -95,17 +95,71 @@ def test_new_section(mock_section, mock_task):
     assert mock_section.id == 2
     assert mock_section.name == "Test Section"
     assert mock_section.list_id == 3
+
+    assert hasattr(mock_section, "tasks")
     assert isinstance(mock_section.tasks, list)
+    assert len(mock_section.tasks) > 0
     assert mock_section.tasks[0] == mock_task
 
 
-def test_new_list():
+def test_section_to_dict(mock_section, mock_task):
+    """
+    Test the to_dict method of Section class.
+    """
+    section_dict = mock_section.to_dict()
+    assert section_dict["id"] == 2
+    assert section_dict["name"] == "Test Section"
+    assert section_dict["list_id"] == 3
+
+    # Check if the tasks are converted to a list of task dictionaries
+    assert isinstance(section_dict["tasks"], list)
+    assert section_dict["tasks"][0] == mock_task.to_dict()
+
+
+@pytest.fixture
+def mock_task_list(mock_section):
+    task_list = TaskList()
+    task_list.id = 3
+    task_list.name = "Test List"
+    task_list.user_id = 1
+    task_list.sections = [mock_section]
+    return task_list
+
+
+def test_new_list(mock_task_list, mock_section, mock_task):
     """
     GIVEN a TaskList model
     WHEN a new TaskList is created
     THEN check the name and user_id fields are defined correctly
     """
-    task_list = TaskList(name="testlist", user_id=1)
+    assert mock_task_list.id == 3
+    assert mock_task_list.name == "Test List"
+    assert mock_task_list.user_id == 1
 
-    assert task_list.name == "testlist"
-    assert task_list.user_id == 1
+    assert isinstance(mock_task_list.sections, list)
+    assert mock_task_list.sections[0] == mock_section
+
+    assert isinstance(mock_task_list.sections[0].tasks, list)
+    assert mock_task_list.sections[0].tasks[0] == mock_task
+
+
+def test_list_to_dict(mock_task_list, mock_section, mock_task):
+    """
+    Test the to_dict method of TaskList class.
+    """
+    list_dict = mock_task_list.to_dict()
+    assert list_dict["id"] == 3
+    assert list_dict["name"] == "Test List"
+    assert list_dict["user_id"] == 1
+
+    # Check if the sections are converted to a list of section dictionaries
+    assert "sections" in list_dict
+    assert isinstance(list_dict["sections"], list)
+    assert len(list_dict["sections"]) > 0
+    assert list_dict["sections"][0] == mock_section.to_dict()
+
+    # Check if the tasks are converted to a list of task dictionaries
+    assert "tasks" in list_dict["sections"][0]
+    assert isinstance(list_dict["sections"][0]["tasks"], list)
+    assert len(list_dict["sections"][0]["tasks"]) > 0
+    assert list_dict["sections"][0]["tasks"][0] == mock_task.to_dict()

@@ -81,23 +81,18 @@ class TaskList(db.Model):
         back_populates="task_list"  # refer to the attr "task_list" in the Task class
     )
 
-    def __init__(self, name: str, user_id: int):
-        """Create a new task list."""
-        self.name = name
-        self.user_id = user_id
-
     def to_dict(self):
         """Add top-level tasks to the list"""
-        tasks = []
-
-        for task in self.tasks:
-            if task.parent_id is None:
-                tasks.append(task.to_dict())
+        # Trigger loading of tasks if they are lazy-loaded
+        sections = (
+            self.sections.all() if hasattr(self.sections, "all") else self.sections
+        )
 
         return {
             "id": self.id,
             "name": self.name,
-            "tasks": tasks,
+            "user_id": self.user_id,
+            "sections": [section.to_dict() for section in sections],
         }
 
 
@@ -127,6 +122,7 @@ class Section(db.Model):
         return {
             "id": self.id,
             "name": self.name,
+            "list_id": self.list_id,
             "tasks": [task.to_dict() for task in self.tasks],
         }
 
