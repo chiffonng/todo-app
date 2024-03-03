@@ -1,11 +1,13 @@
 from flask import Flask
 from flask_login import LoginManager
+from flask_restx import Api
 from flask_sqlalchemy import SQLAlchemy
 
 from .config import Config
 
 db = SQLAlchemy()
 login_manager = LoginManager()
+api = Api(version="0.1", title="Backend API", validate=True)
 
 
 def create_app(test_config=None):
@@ -16,15 +18,18 @@ def create_app(test_config=None):
     if test_config:
         app.config.update(test_config)
 
+    # Import namespaces
+    from .auth import auth_ns
+
     # Bind extensions to the app
     db.init_app(app)
     login_manager.init_app(app)
+    api.init_app(app)
+
+    # Register namespaces
+    api.add_namespace(auth_ns)
 
     with app.app_context():
         db.create_all()
-
-    @app.route("/")
-    def index():
-        return "Welcome to the backend!"
 
     return app
