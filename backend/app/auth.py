@@ -3,8 +3,6 @@ from typing import Tuple
 from flask import Response, jsonify, request
 from flask_login import login_user, logout_user
 from flask_restx import Namespace, Resource, fields
-from werkzeug.security import check_password_hash, generate_password_hash
-from werkzeug.exceptions import BadRequest
 
 from . import api, db
 from .models import User
@@ -39,7 +37,7 @@ class Login(Resource):
             user = db.session.execute(query_user).scalar_one_or_none()
 
             # if user exists and password is correct
-            if user and check_password_hash(user.password_hash, password):
+            if user and user.is_password_valid(password):
                 login_user(user)
                 return (
                     jsonify({"message": "Login succeeded", "user": user.to_dict()}),
@@ -55,7 +53,7 @@ class Login(Resource):
 @auth_ns.route("/register")
 class Register(Resource):
     @auth_ns.expect(user_model)
-    @auth_ns.response(201, "User created")
+    @auth_ns.response(201, "Created a new user")
     @auth_ns.response(400, "Failed to create a user")
     def post(self) -> Tuple[Response, int]:
         """Create a new user."""
@@ -70,9 +68,7 @@ class Register(Resource):
             if user_exists:
                 return jsonify({"message": "Username already exists"}), 400
 
-            new_user = User(
-                username=username, password_hash=generate_password_hash(password)
-            )
+            new_user = User(username=username, password=password)
             db.session.add(new_user)
             db.session.commit()
 
