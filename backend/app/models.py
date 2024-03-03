@@ -4,7 +4,6 @@ from typing import List, Optional, Set
 import sqlalchemy as sa  # database functions
 import sqlalchemy.orm as so
 from flask_login import UserMixin
-from sqlalchemy.ext.hybrid import hybrid_property
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from backend.app import db, login_manager
@@ -121,8 +120,6 @@ class Task(db.Model):
         sa.ForeignKey("tasks.id"), nullable=True
     )
     depth: so.Mapped[int] = so.mapped_column(default=0)
-
-    section_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("sections.id"))
     list_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("task_lists.id"))
 
     task_list: so.Mapped["TaskList"] = so.relationship(back_populates="tasks")
