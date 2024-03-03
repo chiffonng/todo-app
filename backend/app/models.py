@@ -74,9 +74,6 @@ class TaskList(db.Model):
     user_id: so.Mapped[int] = so.mapped_column(sa.Integer, sa.ForeignKey("users.id"))
 
     user: so.Mapped["User"] = so.relationship(back_populates="task_lists")
-    sections: so.Mapped[List["Section"]] = so.relationship(
-        back_populates="task_list"  # refer to the attr "task_list" in the Section class
-    )
     tasks: so.Mapped[List["Task"]] = so.relationship(
         back_populates="task_list"  # refer to the attr "task_list" in the Task class
     )
@@ -93,37 +90,6 @@ class TaskList(db.Model):
             "name": self.name,
             "user_id": self.user_id,
             "sections": [section.to_dict() for section in sections],
-        }
-
-
-class Section(db.Model):
-    """A section of tasks within a task list.
-
-    Attributes:
-    - id: int, primary key
-    - name: str, 100 characters
-    - list_id: int, foreign key
-
-    Relationships:
-    - Belongs to a task list
-    - Contains tasks
-    """
-
-    __tablename__ = "sections"
-
-    id: so.Mapped[int] = so.mapped_column(primary_key=True, autoincrement=True)
-    name: so.Mapped[str] = so.mapped_column(sa.String(100))
-    list_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("task_lists.id"))
-
-    task_list: so.Mapped["TaskList"] = so.relationship(back_populates="sections")
-    tasks: so.Mapped[List["Task"]] = so.relationship(back_populates="section")
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "list_id": self.list_id,
-            "tasks": [task.to_dict() for task in self.tasks],
         }
 
 
@@ -159,7 +125,6 @@ class Task(db.Model):
     section_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("sections.id"))
     list_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("task_lists.id"))
 
-    section: so.Mapped["Section"] = so.relationship(back_populates="tasks")
     task_list: so.Mapped["TaskList"] = so.relationship(back_populates="tasks")
 
     # self-referential relationship to create a tree of tasks

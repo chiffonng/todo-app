@@ -7,7 +7,7 @@ from .config import Config
 
 db = SQLAlchemy()
 login_manager = LoginManager()
-api = Api(version="0.1", title="Backend API", validate=True)
+api = Api(version="0.1", doc="/api", title="Todo API", validate=True)
 
 
 def create_app(test_config=None):
@@ -20,6 +20,7 @@ def create_app(test_config=None):
 
     # Import namespaces
     from .auth import auth_ns
+    from .list import list_bp
 
     # Bind extensions to the app
     db.init_app(app)
@@ -28,6 +29,7 @@ def create_app(test_config=None):
 
     # Register namespaces
     api.add_namespace(auth_ns)
+    app.register_blueprint(list_bp)
 
     with app.app_context():
         db.create_all()
