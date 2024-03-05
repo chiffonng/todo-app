@@ -18,9 +18,10 @@ def create_app(test_config=None):
     if test_config:
         app.config.update(test_config)
 
-    # Import namespaces
+    # Import namespaces and blueprints
     from .auth import auth_ns
     from .list import list_bp
+    from .task import task_bp
 
     # Bind extensions to the app
     db.init_app(app)
@@ -30,6 +31,7 @@ def create_app(test_config=None):
     # Register namespaces
     api.add_namespace(auth_ns)
     app.register_blueprint(list_bp)
+    app.register_blueprint(task_bp)
 
     with app.app_context():
         db.create_all()
