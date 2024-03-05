@@ -6,6 +6,14 @@ from flask_restx import Namespace, Resource, fields
 
 from . import api, db
 from .models import User
+from .uri import (
+    LOGIN_ENDPOINT,
+    LOGOUT_ENDPOINT,
+    REGISTER_ENDPOINT,
+    SIGNIN_ENDPOINT,
+    SIGNOUT_ENDPOINT,
+    SIGNUP_ENDPOINT,
+)
 
 auth_ns = api.namespace("auth", description="User authentication")
 
@@ -18,8 +26,8 @@ user_model = auth_ns.model(
 )
 
 
-@auth_ns.route("/login")
-@auth_ns.route("/signin")
+@auth_ns.route(LOGIN_ENDPOINT)
+@auth_ns.route(SIGNIN_ENDPOINT)
 class Login(Resource):
     @auth_ns.expect(user_model)
     @auth_ns.response(200, "Login succeeded")
@@ -49,8 +57,8 @@ class Login(Resource):
             return jsonify({"error": e}), 400
 
 
-@auth_ns.route("/signup")
-@auth_ns.route("/register")
+@auth_ns.route(REGISTER_ENDPOINT)
+@auth_ns.route(SIGNUP_ENDPOINT)
 class Register(Resource):
     @auth_ns.expect(user_model)
     @auth_ns.response(201, "Created a new user")
@@ -89,7 +97,8 @@ class Register(Resource):
             )
 
 
-@auth_ns.route("/logout")
+@auth_ns.route(LOGOUT_ENDPOINT)
+@auth_ns.route(SIGNOUT_ENDPOINT)
 class Logout(Resource):
     @auth_ns.response(200, "Successfully logged out")
     @auth_ns.response(400, "Failed to log out")

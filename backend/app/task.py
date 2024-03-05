@@ -5,16 +5,26 @@ from flask_login import login_required, current_user
 
 from . import db
 from .models import Task
+from .uri import (
+    GET_TASK_ENDPOINT,
+    GET_SUBTASKS_ENDPOINT,
+    UPDATE_TASK_STATUS_ENDPOINT,
+    CREATE_TASK_ENDPOINT,
+    CREATE_SUBTASK_ENDPOINT,
+    DELETE_TASK_ENDPOINT,
+    EDIT_TASK_ENDPOINT,
+    MOVE_TASK_ENDPOINT,
+)
 
 task_bp = Blueprint("task", __name__)
 
 
-@task_bp.route("#t/task_id", methods=["GET"])
+@task_bp.route(GET_TASK_ENDPOINT, methods=["GET"])
 @login_required
 def get_task(task_id: int) -> Tuple[Response, int]:
     """Get a specific task by its ID."""
 
-    task = db.session.get(task_id)
+    task = db.session.get(Task, task_id)
     if not task:
         abort(404, description="Task not found")
     return (
@@ -28,7 +38,7 @@ def get_task(task_id: int) -> Tuple[Response, int]:
     )
 
 
-@task_bp.route("#t/task_id/subtasks", methods=["GET"])
+@task_bp.route(GET_SUBTASKS_ENDPOINT, methods=["GET"])
 @login_required
 def get_subtasks(task_id: int) -> Tuple[Response, int]:
     """Get immediate subtasks of a task."""
@@ -60,7 +70,7 @@ def get_subtasks(task_id: int) -> Tuple[Response, int]:
         )
 
 
-@task_bp.route("#t/", methods=["POST"])
+@task_bp.route(CREATE_TASK_ENDPOINT, methods=["POST"])
 @login_required
 def create_task() -> Tuple[Response, int]:
     """Create a new top-level task."""
@@ -84,10 +94,10 @@ def create_task() -> Tuple[Response, int]:
         return jsonify({"message": f"Failed to create task. Error {str(e)}"}), 500
 
 
-@task_bp.route("#t/<int:parent_id>", methods=["POST"])
+@task_bp.route(CREATE_SUBTASK_ENDPOINT, methods=["POST"])
 @login_required
-def create_subtask(parent_id) -> Tuple[Response, int]:
-    parent_task = db.session.get(Task, parent_id)
+def create_subtask(task_id: int) -> Tuple[Response, int]:
+    parent_task = db.session.get(Task, task_id)
     if not parent_task:
         return jsonify({"message": f"Parent task not found. Error {str(e)}"}), 404
 
@@ -112,7 +122,7 @@ def create_subtask(parent_id) -> Tuple[Response, int]:
         return jsonify({"message": "Failed to create subtask", "error": str(e)}), 500
 
 
-@task_bp.route("#t/task_id", methods=["DELETE"])
+@task_bp.route(DELETE_TASK_ENDPOINT, methods=["DELETE"])
 @login_required
 def delete_task(task_id: int) -> Tuple[Response, int]:
     try:
@@ -144,7 +154,7 @@ def delete_task(task_id: int) -> Tuple[Response, int]:
         )
 
 
-@task_bp.route("#t/task_id", methods=["PUT"])
+@task_bp.route(EDIT_TASK_ENDPOINT, methods=["PUT"])
 @login_required
 def edit_task(task_id: int) -> Tuple[Response, int]:
     """Edt a specific task by its ID. Possible changes include name and date"""
@@ -182,7 +192,7 @@ def edit_task(task_id: int) -> Tuple[Response, int]:
         )
 
 
-@task_bp.route("#t/task_id/move'", methods=["PUT"])
+@task_bp.route(MOVE_TASK_ENDPOINT, methods=["PUT"])
 @login_required
 def move_task(task_id: int) -> Tuple[Response, int]:
     """Drag and drop a task to a different list"""
@@ -247,7 +257,7 @@ def update_parent_status(task: Task) -> None:
     update_parent_status(parent_task)
 
 
-@task_bp.route("#l/list_id/#s/section_id/tasks/task_id", methods=["PUT"])
+@task_bp.route(UPDATE_TASK_STATUS_ENDPOINT, methods=["PUT"])
 @login_required
 def update_task_status(task_id: int) -> Tuple[Response, int]:
     """Update the status of a specific task by its ID."""
@@ -293,7 +303,7 @@ def update_task_status(task_id: int) -> Tuple[Response, int]:
         )
 
 
-@task_bp.route("#l/list_id/#s/section_id/tasks/task_id", methods=["PUT"])
+@task_bp.route(EDIT_TASK_ENDPOINT, methods=["PUT"])
 @login_required
 def edit_task(task_id: int) -> Tuple[Response, int]:
     """Edt a specific task by its ID. Possible changes include:

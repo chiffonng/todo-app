@@ -3,13 +3,21 @@ from typing import Tuple
 from flask import Blueprint, Response, request, jsonify
 from flask_login import login_required, current_user
 
-from .models import TaskList, Task
 from . import db
+from .models import TaskList, Task
+from .uri import (
+    GET_ALL_LISTS_ENDPOINT,
+    GET_LIST_ENDPOINT,
+    GET_TASKS_ENDPOINT,
+    CREATE_LIST_ENDPOINT,
+    DELETE_LIST_ENDPOINT,
+    EDIT_LIST_ENDPOINT,
+)
 
 list_bp = Blueprint("list", __name__)
 
 
-@list_bp.route("/#l/all", methods=["GET"])
+@list_bp.route(GET_ALL_LISTS_ENDPOINT, methods=["GET"])
 @login_required
 def get_all_lists():
     """Get all lists of the current user from the database."""
@@ -48,7 +56,7 @@ def get_all_lists():
         )
 
 
-@list_bp.route("/#l/<int:list_id>", methods=["GET"])
+@list_bp.route(GET_LIST_ENDPOINT, methods=["GET"])
 @login_required
 def get_list(list_id: int) -> Tuple[Response, int]:
     """Get a specific list by its ID."""
@@ -78,7 +86,7 @@ def get_list(list_id: int) -> Tuple[Response, int]:
         )
 
 
-@list_bp.route("/#l/<int:list_id>/tasks", methods=["GET"])
+@list_bp.route(GET_TASKS_ENDPOINT, methods=["GET"])
 @login_required
 def get_tasks(list_id: int) -> Tuple[Response, int]:
     """Get all tasks from a specific list"""
@@ -106,7 +114,7 @@ def get_tasks(list_id: int) -> Tuple[Response, int]:
         )
 
 
-@list_bp.route("/#l/", methods=["POST"])
+@list_bp.route(CREATE_LIST_ENDPOINT, methods=["POST"])
 @login_required
 def create_list():
     """Create a new task list."""
@@ -136,7 +144,7 @@ def create_list():
 
 
 # delete a specific list from the database
-@list_bp.route("/#l/<int:list_id>", methods=["DELETE"])
+@list_bp.route(DELETE_LIST_ENDPOINT, methods=["DELETE"])
 @login_required
 def delete_list(list_id: int) -> Tuple[Response, int]:
     try:
@@ -169,9 +177,9 @@ def delete_list(list_id: int) -> Tuple[Response, int]:
 
 
 # update a specific list in the database
-@list_bp.route("/#l/<list_id>", methods=["PUT"])
+@list_bp.route(EDIT_LIST_ENDPOINT, methods=["PUT"])
 @login_required
-def update_list(list_id: int) -> Tuple[Response, int]:
+def edit_list(list_id: int) -> Tuple[Response, int]:
     """Update list name"""
 
     try:
