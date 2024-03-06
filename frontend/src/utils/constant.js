@@ -44,10 +44,3 @@ export const ACTION_TYPES = {
   MOVE_TASK: 'MOVE_TASK',
   REMOVE_TASK: 'REMOVE_TASK',
 };
-
-// Other constants specific to the app
-export const DEFAULT_TASK = {
-  title: '',
-  description: '',
-  status: TASK_STATUSES.TODO,
-};
