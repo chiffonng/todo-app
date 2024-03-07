@@ -1,11 +1,13 @@
 from typing import Tuple
 
-from flask import Blueprint, Response, request, jsonify
 from flask_login import login_required, current_user
+from flask_restx import Namespace, Resource, fields
 
-from . import db
+from . import db, api
 from .models import TaskList, Task
+from .task import task_model, task_model_with_subtasks
 from .uri import (
+    LISTS_ENDPOINT,
     GET_ALL_LISTS_ENDPOINT,
     GET_LIST_ENDPOINT,
     GET_TASKS_ENDPOINT,
@@ -14,199 +16,151 @@ from .uri import (
     EDIT_LIST_ENDPOINT,
 )
 
-list_bp = Blueprint("list", __name__)
+list_ns = Namespace("list", description="List operations", path=LISTS_ENDPOINT)
+
+list_model = list_ns.model(
+    "Task list",
+    {
+        "id": fields.Integer(required=True, description="List ID"),
+        "name": fields.String(
+            required=True, description="List name", min_length=1, max_length=50
+        ),
+        "user_id": fields.Integer(required=True, description="User ID"),
+        "tasks": fields.List(
+            fields.Nested(task_model_with_subtasks), description="Tasks", required=False
+        ),
+    },
+)
+
+list_parser = list_ns.parser()
+list_parser.add_argument("name", type=str, required=True, help="List name")
 
 
-@list_bp.route(GET_ALL_LISTS_ENDPOINT, methods=["GET"])
-@login_required
-def get_all_lists():
-    """Get all lists of the current user from the database."""
-    try:
-        lists = (
-            db.session.execute(
-                select(TaskList).where(TaskList.user_id == current_user.id)
+@list_ns.route(GET_ALL_LISTS_ENDPOINT)
+class GetAllLists(Resource):
+    @login_required
+    @list_ns.marshal_with(list_model, as_list=True)
+    @list_ns.response(200, "Succesfully retrieved all lists")
+    @list_ns.response(400, "Failed to retrieve lists")
+    def get(self):
+        """Get all lists of the current user from the database."""
+
+        try:
+            lists = (
+                db.session.execute(
+                    select(TaskList).where(TaskList.user_id == current_user.id)
+                )
+                .scalars()  # Convert the result to a list
+                .all()  # Get all the results
             )
-            .scalars()
-            .all()
-        )
 
-        return (
-            jsonify(
-                {
-                    "message": "Successfully retrieved all lists from the database",
-                    "lists": [
-                        {
-                            "id": task_list.id,
-                            "name": task_list.name,
-                        }
-                        for task_list in lists
-                    ],
-                }
-            ),
-            200,
-        )
-    except Exception as e:
-        return (
-            jsonify(
-                {
-                    "message": f"Failed to retrieve all lists from the database.. error is {e}"
-                }
-            ),
-            400,
-        )
+            return {"lists": [task_list.to_dict() for task_list in lists]}, 200
+        except Exception as e:
+            task_ns.abort(400, f"Failed to retrieve lists. Error: {e}")
 
 
-@list_bp.route(GET_LIST_ENDPOINT, methods=["GET"])
-@login_required
-def get_list(list_id: int) -> Tuple[Response, int]:
-    """Get a specific list by its ID."""
-
-    task_list = db.session.get(TaskList, list_id)
-    if not tasklist:
-        return jsonify({"error": "Task list not found"}), 404
-    try:
-        return (
-            jsonify(
-                {
-                    "message": "Successfully retrieved list with id {list_id}.",
-                    "list": task_list.to_dict(),
-                }
-            ),
-            200,
-        )
-    except Exception as e:
-        return (
-            jsonify(
-                {
-                    "message": f"Failed to retrieve list with id {list_id}. ",
-                    "error": str(e),
-                }
-            ),
-            400,
-        )
-
-
-@list_bp.route(GET_TASKS_ENDPOINT, methods=["GET"])
-@login_required
-def get_tasks(list_id: int) -> Tuple[Response, int]:
-    """Get all tasks from a specific list"""
-    try:
-        tasks = db.session.get(TaskList, list_id).tasks
-
-        return (
-            jsonify(
-                {
-                    "message": f"Successfully retrieved all tasks from list with id {list_id}.",
-                    "tasks": [task.to_dict() for task in tasks],
-                }
-            ),
-            200,
-        )
-    except Exception as e:
-        return (
-            jsonify(
-                {
-                    "message": f"Failed to retrieve all tasks from list ID{list_id}",
-                    "error": str(e),
-                }
-            ),
-            400,
-        )
-
-
-@list_bp.route(CREATE_LIST_ENDPOINT, methods=["POST"])
-@login_required
-def create_list():
-    """Create a new task list."""
-    try:
-        name = request.json.get("name")
-        user_id = current_user.id
-
-        task_list = TaskList(name=name, user_id=user_id)
-        db.session.add(task_list)
-        db.session.commit()
-
-        return (
-            jsonify({"message": f"Successfully created a new list with name {name}."}),
-            201,
-        )
-    except Exception as e:
-        db.session.rollback()
-        return (
-            jsonify(
-                {
-                    "message": f"Failed to create a new list with name {name}.",
-                    "error": str(e),
-                }
-            ),
-            400,
-        )
-
-
-# delete a specific list from the database
-@list_bp.route(DELETE_LIST_ENDPOINT, methods=["DELETE"])
-@login_required
-def delete_list(list_id: int) -> Tuple[Response, int]:
-    try:
+@list_ns.route(GET_LIST_ENDPOINT)
+class GetList(Resource):
+    @login_required
+    @list_ns.marshal_with(list_model)
+    @list_ns.response(200, "Successfully retrieved list")
+    @list_ns.response(404, "List not found")
+    def get(self, list_id: int):
+        """Get a specific list by its ID."""
         task_list = db.session.get(TaskList, list_id)
-
         if not task_list:
-            return (
-                jsonify({"message": f"List with id {list_id} not found."}),
-                404,
-            )
-
-        # check if the list has any tasks and delete them
-        tasks = db.session.get(TaskList, list_id).tasks
-        for task in tasks:
-            db.session.delete(task)
-
-        db.session.delete(task_list)
-        db.session.commit()
-
-        return (
-            jsonify({"message": f"Successfully deleted the list ID {list_id}."}),
-            200,
-        )
-    except Exception as e:
-        db.session.rollback()
-        return (
-            jsonify({"message": f"Failed to delete the list ID {list_id}. Error {e}"}),
-            500,
-        )
+            list_ns.abort(404, message="List not found")
+        return task_list.to_dict(), 200
 
 
-# update a specific list in the database
-@list_bp.route(EDIT_LIST_ENDPOINT, methods=["PUT"])
-@login_required
-def edit_list(list_id: int) -> Tuple[Response, int]:
-    """Update list name"""
-
-    try:
-        # Retrieve the list that matches the list_id and current user's id
+@list_ns.route(GET_TASKS_ENDPOINT)
+class GetTasks(Resource):
+    @login_required
+    @list_ns.marshal_with(task_model, as_list=True)
+    @list_ns.response(200, "Successfully retrieved tasks")
+    @list_ns.response(404, "List not found")
+    def get(self, list_id: int):
+        """Get all tasks from a specific list."""
         task_list = db.session.get(TaskList, list_id)
-
         if not task_list:
-            return (
-                jsonify({"message": f"List with id {list_id} not found."}),
-                404,
-            )
+            list_ns.abort(404, message="List not found")
+        tasks = task_list.tasks
+        return {"tasks": [task.to_dict() for task in tasks]}, 200
 
-        # Get the new name from the request
-        name = request.json.get("name")
-        task_list.name = name
 
-        db.session.commit()
+@list_ns.route(CREATE_LIST_ENDPOINT)
+class CreateList(Resource):
+    @login_required
+    @list_ns.expect(list_parser, validate=True)
+    @list_ns.response(201, "List created successfully")
+    @list_ns.response(500, "Internal server error")
+    def post(self):
+        """Create a new task list."""
+        args = list_parser.parse_args()
+        name = args["name"]
 
-        return (
-            jsonify({"message": f"Successfully updated the list with id {list_id}."}),
-            200,
-        )
-    except Exception as e:
-        db.session.rollback()
-        return (
-            jsonify(
-                {"message": f"Failed to update the list with id {list_id}", "error": e}
-            ),
-            400,
-        )
+        try:
+            new_list = TaskList(name=name, user_id=current_user.id)
+            db.session.add(new_list)
+            db.session.commit()
+            return {
+                "message": f"Successfully created a new list with name {name}."
+            }, 201
+
+        except Exception as e:
+            db.session.rollback()
+            list_ns.abort(500, f"Failed to create a new list. Error: {e}")
+
+
+@list_ns.route(DELETE_LIST_ENDPOINT)
+class DeleteList(Resource):
+    @login_required
+    @list_ns.response(200, "List deleted successfully")
+    @list_ns.response(404, "List not found")
+    @list_ns.response(500, "Internal server error")
+    def delete(self, list_id: int):
+        """Delete a specific list."""
+        try:
+            task_list = db.session.get(TaskList, list_id)
+
+            if not task_list:
+                list_ns.abort(404, f"List with ID {list_id} not found.")
+
+            db.session.delete(task_list)
+            db.session.commit()
+
+            return {"message": f"Successfully deleted list ID {list_id}."}, 200
+
+        except Exception as e:
+            db.session.rollback()
+            list_ns.abort(500, f"Failed to delete list. Error: {e}")
+
+
+@list_ns.route(EDIT_LIST_ENDPOINT)
+class EditList(Resource):
+    @login_required
+    @list_ns.expect(list_parser, validate=True)
+    @list_ns.response(200, "List updated successfully")
+    @list_ns.response(404, "List not found")
+    @list_ns.response(500, "Internal server error")
+    def put(self, list_id: int):
+        """Update list name."""
+        args = edit_list_parser.parse_args()
+        name = args["name"]
+
+        try:
+            task_list = db.session.get(TaskList, list_id)
+
+            if not task_list:
+                list_ns.abort(404, f"List with ID {list_id} not found.")
+
+            task_list.name = name
+            db.session.commit()
+
+            return {
+                "message": f"Successfully updated list ID {list_id} to new name {name}"
+            }, 200
+
+        except Exception as e:
+            db.session.rollback()
+            list_ns.abort(500, f"Server failed to update list. Error: {e}")

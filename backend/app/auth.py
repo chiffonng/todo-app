@@ -7,6 +7,7 @@ from flask_restx import Namespace, Resource, fields
 from . import api, db
 from .models import User
 from .uri import (
+    AUTH_ENDPOINT,
     LOGIN_ENDPOINT,
     LOGOUT_ENDPOINT,
     REGISTER_ENDPOINT,
@@ -15,13 +16,20 @@ from .uri import (
     SIGNUP_ENDPOINT,
 )
 
-auth_ns = api.namespace("auth", description="User authentication")
+auth_ns = api.namespace("auth", description="User authentication", path=AUTH_ENDPOINT)
 
 user_model = auth_ns.model(
     "User",
     {
-        "username": fields.String(required=True, description="The username"),
-        "password": fields.String(required=True, description="The plaintext password"),
+        "username": fields.String(
+            required=True, description="The username", min_length=3, max_length=32
+        ),
+        "password": fields.String(
+            required=True,
+            description="The plaintext password",
+            min_length=6,
+            max_length=64,
+        ),
     },
 )
 
