@@ -7,6 +7,7 @@ from flask_restx import Namespace, Resource, fields
 from . import api, db
 from .models import User
 from .uri import (
+    AUTH_ENDPOINT,
     LOGIN_ENDPOINT,
     LOGOUT_ENDPOINT,
     REGISTER_ENDPOINT,
@@ -15,19 +16,25 @@ from .uri import (
     SIGNUP_ENDPOINT,
 )
 
-auth_ns = api.namespace("auth", description="User authentication")
+auth_ns = api.namespace("auth", description="User authentication", path=AUTH_ENDPOINT)
 
 user_model = auth_ns.model(
     "User",
     {
-        "username": fields.String(required=True, description="The username"),
-        "password": fields.String(required=True, description="The plaintext password"),
+        "username": fields.String(
+            required=True, description="The username", min_length=3, max_length=32
+        ),
+        "password": fields.String(
+            required=True,
+            description="The plaintext password",
+            min_length=6,
+            max_length=64,
+        ),
     },
 )
 
 
 @auth_ns.route(LOGIN_ENDPOINT)
-@auth_ns.route(SIGNIN_ENDPOINT)
 class Login(Resource):
     @auth_ns.expect(user_model)
     @auth_ns.response(200, "Login succeeded")
@@ -58,7 +65,6 @@ class Login(Resource):
 
 
 @auth_ns.route(REGISTER_ENDPOINT)
-@auth_ns.route(SIGNUP_ENDPOINT)
 class Register(Resource):
     @auth_ns.expect(user_model)
     @auth_ns.response(201, "Created a new user")
@@ -98,7 +104,6 @@ class Register(Resource):
 
 
 @auth_ns.route(LOGOUT_ENDPOINT)
-@auth_ns.route(SIGNOUT_ENDPOINT)
 class Logout(Resource):
     @auth_ns.response(200, "Successfully logged out")
     @auth_ns.response(400, "Failed to log out")

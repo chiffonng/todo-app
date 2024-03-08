@@ -58,7 +58,6 @@ class TaskList(db.Model):
     Attributes:
     - id: int, primary key
     - name: str, 100 characters
-    - due_date: date
     - user_id: int, foreign key
 
     Relationships:
@@ -98,11 +97,10 @@ class Task(db.Model):
     - name: str, 100 characters
     - due_date: date
     - is_completed: bool
-    - section_id: int, foreign key
     - list_id: int, foreign key
 
     Relationships:
-    - Falls under section and task list
+    - Falls under task list
     - Can have subtasks
     - Can have a parent task
     """
@@ -138,7 +136,6 @@ class Task(db.Model):
             "due_date": self.due_date,
             "is_completed": self.is_completed,
             "parent_id": self.parent_id,
-            "section_id": self.section_id,
             "list_id": self.list_id,
             "subtasks": [subtask.to_dict() for subtask in self.subtasks],
         }
