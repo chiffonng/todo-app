@@ -7,6 +7,7 @@ from . import db, api
 from .models import Task
 from .uri import (
     TASKS_ENDPOINT,
+    GET_TASKS_ENDPOINT,
     GET_TASK_ENDPOINT,
     GET_SUBTASKS_ENDPOINT,
     UPDATE_TASK_STATUS_ENDPOINT,
@@ -25,9 +26,6 @@ task_model = task_ns.model(
     {
         "id": fields.Integer(required=True, description="Task ID"),
         "name": fields.String(required=True, description="Task name", max_length=100),
-        "due_date": fields.String(
-            description="Due date of the task", allow_null=True
-        ),  # Assuming date as string for simplicity
         "is_completed": fields.Boolean(
             required=True, description="Task completion status", default=False
         ),
@@ -50,6 +48,21 @@ task_parser.add_argument("parent_id", type=int, help="Parent task ID", required=
 task_parser.add_argument(
     "list_id", required=True, type=int, help="List ID for the task"
 )
+
+
+@task_ns.route(GET_TASKS_ENDPOINT)
+class GetTasks(Resource):
+    @login_required
+    @task_ns.marshal_with(task_model, as_list=True)
+    @task_ns.response(200, "Successfully retrieved tasks")
+    @task_ns.response(404, "List not found")
+    def get(self, list_id: int):
+        """Get all tasks from a specific list."""
+        task_list = db.session.get(TaskList, list_id)
+        if not task_list:
+            task_ns.abort(404, message="List not found")
+        tasks = task_list.tasks
+        return {"tasks": [task.to_dict() for task in tasks]}, 200
 
 
 @task_ns.route(GET_TASK_ENDPOINT)
@@ -177,7 +190,7 @@ class EditTask(Resource):
     @task_ns.response(404, "Task not found")
     @task_ns.response(500, "Failed to update task")
     def put(self, task_id: int):
-        """Edit a specific task by its ID. Possible changes include name and date."""
+        """Edit a specific task name by its ID."""
         args = task_parser.parse_args()
         try:
             task = db.session.get(Task, task_id)
@@ -185,7 +198,6 @@ class EditTask(Resource):
                 task_ns.abort(404, f"Task with id {task_id} not found.")
 
             task.name = args.get("name", task.name)
-            task.due_date = args.get("due_date", task.due_date)
 
             db.session.commit()
             return task.to_dict(), 200

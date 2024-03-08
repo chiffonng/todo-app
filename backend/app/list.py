@@ -73,21 +73,6 @@ class GetList(Resource):
         return task_list.to_dict(), 200
 
 
-@list_ns.route(GET_TASKS_ENDPOINT)
-class GetTasks(Resource):
-    @login_required
-    @list_ns.marshal_with(task_model, as_list=True)
-    @list_ns.response(200, "Successfully retrieved tasks")
-    @list_ns.response(404, "List not found")
-    def get(self, list_id: int):
-        """Get all tasks from a specific list."""
-        task_list = db.session.get(TaskList, list_id)
-        if not task_list:
-            list_ns.abort(404, message="List not found")
-        tasks = task_list.tasks
-        return {"tasks": [task.to_dict() for task in tasks]}, 200
-
-
 @list_ns.route(CREATE_LIST_ENDPOINT)
 class CreateList(Resource):
     @login_required
