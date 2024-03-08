@@ -16,24 +16,36 @@ import IconButton from "@mui/material/IconButton";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Typography from "@mui/material/Typography";
+import useAuth from "../../hooks/useAuth";
+import { ROUTES } from "../../utils/constants";
 
 const LoginForm = () => {
+	const { login } = useAuth();
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
 
-	const handleSubmit = (event) => {
-		event.preventDefault();
-		// TODO: Handle login logic here
-		console.log("Login with:", username, password);
-	};
-
-	const handleClickShowPassword = () => {
-		setShowPassword(!showPassword);
-	};
+	const handleClickShowPassword = () =>
+		setShowPassword((prevShowPassword) => !prevShowPassword);
 
 	const handleMouseDownPassword = (event) => {
 		event.preventDefault();
+	};
+	const handleSubmit = async (event) => {
+		event.preventDefault();
+		try {
+			const response = await login(username, password);
+			if (response.error) {
+				// Handle error here
+				console.log(response.error);
+			} else {
+				// Handle successful login here
+				console.log("Logged in successfully");
+			}
+		} catch (error) {
+			// Handle exception here
+			console.log(error);
+		}
 	};
 
 	return (
@@ -58,7 +70,7 @@ const LoginForm = () => {
 					<LockOutlinedIcon />
 				</Avatar>
 				<Typography component="h1" variant="h5">
-					Sign in
+					Log in
 				</Typography>
 				<Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1 }}>
 					<TextField
@@ -125,7 +137,7 @@ const LoginForm = () => {
 					<Grid container>
 						<Grid item xs></Grid>
 						<Grid item>
-							<Link href="#" variant="body2">
+							<Link href={ROUTES.REGISTER} variant="body2">
 								{"Don't have an account? Resgister here"}
 							</Link>
 						</Grid>

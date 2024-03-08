@@ -16,8 +16,11 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import useAuth from "../../hooks/useAuth";
+import { ROUTES } from "../../utils/constants";
 
 export default function RegisterForm() {
+	const { register } = useAuth();
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
@@ -26,11 +29,22 @@ export default function RegisterForm() {
 		setShowPassword(!showPassword); // Toggle the showPassword state
 	};
 
-	const handleSubmit = (event) => {
+	const handleSubmit = async (event) => {
 		event.preventDefault();
 		// Handle the form submission
-		console.log("Register with:", username, password);
-		// TODO: send the username and password to your backend server here
+		try {
+			const response = await register(username, password);
+			if (response.error) {
+				// Handle error here
+				console.log(response.error);
+			} else {
+				// Handle successful registration here
+				console.log("Registered successfully");
+			}
+		} catch (error) {
+			// Handle exception here
+			console.log(error);
+		}
 	};
 
 	return (
@@ -120,7 +134,7 @@ export default function RegisterForm() {
 					</Button>
 					<Grid container>
 						<Grid item>
-							<Link href="#" variant="body2">
+							<Link href={ROUTES.LOGIN} variant="body2">
 								{"Have an account? Log in"}
 							</Link>
 						</Grid>

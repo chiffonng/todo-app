@@ -1,17 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
+import useAuth from "../../hooks/useAuth";
+import { ROUTES } from "../../utils/constants";
 
 export default function Navbar() {
-	//TODO: const { isAuthenticated, logout } = useContext(AuthContext);
-	// For testing purposes, we use local state to simulate authentication.
-	const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-	// Simulate a logout function
-	const logout = () => {
-		console.log("Logout clicked");
-		setIsAuthenticated(false);
-		// Here you would normally clear the auth tokens and update the context
-	};
+	const { currentUser, isAuthenticated, logout } = useAuth();
 
 	return (
 		<AppBar
@@ -25,20 +18,19 @@ export default function Navbar() {
 					Just Do
 				</Typography>
 				{!isAuthenticated ? (
-					<Box sx={{ "& > *": { ml: 2 } }}>
-						{" "}
+					<Box sx={{ "& > *": { ml: 6 } }}>
 						{/* Apply margin between children */}
-						<Button color="inherit" variant="outlined" href="/signup">
-							Sign Up
+						<Button color="inherit" variant="outlined" href={ROUTES.REGISTER}>
+							Register
 						</Button>
-						<Button color="primary" variant="contained" href="/login">
+						<Button color="primary" variant="contained" href={ROUTES.LOGIN}>
 							Login
 						</Button>
 					</Box>
 				) : (
 					<Box sx={{ display: "flex", alignItems: "center" }}>
 						<Typography variant="subtitle1" sx={{ marginRight: 2 }}>
-							{/* Display the user's name or username here */}
+							{currentUser.username}
 						</Typography>
 						<Button color="inherit" onClick={logout}>
 							Logout
