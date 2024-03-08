@@ -1,111 +1,110 @@
-import { API_BASE_URL } from "../utils/constant";
+import axios from "axios";
+import { API_BASE_URL } from "../utils/constants";
 
 /**
- * A client for making API requests to the List App backend.
+ * ApiService class acts as a HTTP client using Axios.
+ * This service is responsible for sending API requests to the backend.
  */
 export default class ApiService {
-  /**
-   * Creates a new ListAppApiClient instance.
-   */
-  constructor() {
-    /**
-     * The base URL for the API requests.
-     * @type {string}
-     */
-    this.base_url = API_BASE_URL;
-  }
+	/**
+	 * Constructor for the ApiService class.
+	 * Initializes an Axios instance with base configuration.
+	 */
+	constructor() {
+		// Create an Axios instance with default configuration
+		this.axiosInstance = axios.create({
+			baseURL: API_BASE_URL, // Set the base URL for all requests
+			withCredentials: true, // Indicates whether or not cross-site Access-Control requests should be made using credentials
+			headers: {
+				"Content-Type": "application/json", // Set default headers for requests to 'application/json'
+			},
+		});
+	}
 
-  /**
-   * Sends an API request with the given options.
-   * @param {object} options - The options for the API request.
-   * @param {string} options.url - The URL for the API request.
-   * @param {string} options.method - The HTTP method for the API request.
-   * @param {object} [options.query] - The query parameters for the API request.
-   * @param {object} [options.headers] - The headers for the API request.
-   * @param {object} [options.body] - The body for the API request.
-   * @returns {Promise<object>} - A promise that resolves to the API response.
-   */
-  async request(options) {
-    let query = new URLSearchParams(options.query || {}).toString();
-    if (query !== '') {
-      query = '?' + query;
-    }
+	/**
+	 * Generic request function that handles all HTTP requests.
+	 *
+	 * @param {object} options - The configuration object for the Axios request.
+	 * @param {string} options.url - The endpoint URL after the base URL.
+	 * @param {string} options.method - The HTTP method (GET, POST, PUT, DELETE).
+	 * @param {object} [options.query] - The query parameters for the request.
+	 * @param {object} [options.headers] - The headers for the request.
+	 * @param {object} [options.body] - The body of the request (for POST/PUT).
+	 * @returns {Promise<object>} - A promise that resolves to the response object.
+	 */
+	async request({ url, method, query, headers, body }) {
+		try {
+			// Make the HTTP request using the Axios instance
+			const response = await this.axiosInstance({
+				url,
+				method,
+				params: query,
+				headers,
+				data: body,
+			});
 
-    let response;
-    try {
-      response = await fetch(this.base_url + options.url + query, {
-        method: options.method,
-        headers: {
-          "Content-Type": "application/json",
-          ...options.headers,
-        },
-        credentials: "include",
-        body: options.body ? JSON.stringify(options.body) : null,
-      });
+			// Return a response object with a flag indicating success, status code, and the response data
+			return {
+				ok: response.status >= 200 && response.status < 300,
+				status: response.status,
+				body: response.data,
+			};
+		} catch (error) {
+			// Return a standardized error object in case of an exception
+			return {
+				ok: false,
+				status: error.response?.status || 500,
+				body: error.response?.data || { message: "The server is unresponsive" },
+			};
+		}
+	}
 
-      if (response.status === 401) {
-        return { unauthorized: true };
-      }
-    }
-    catch (error) {
-      response = {
-        ok: false,
-        status: 500,
-        json: async () => { return {
-          code: 500,
-          message: 'The server is unresponsive',
-          description: error.toString(),
-        }; }
-      };
-    }
+	// Method-specific wrappers for the request function follow
 
-    return {
-      ok: response.ok,
-      status: response.status,
-      body: response.status !== 204 ? await response.json() : null
-    };
-  }
+	/**
+	 * Wrapper for making GET requests.
+	 *
+	 * @param {string} url - The endpoint URL after the base URL.
+	 * @param {object} [query] - The query parameters for the request.
+	 * @param {object} [options] - Additional options for the request.
+	 * @returns {Promise<object>} - A promise that resolves to the response object.
+	 */
+	get(url, query, options = {}) {
+		return this.request({ ...options, method: "GET", url, query });
+	}
 
-  /**
-   * Sends a GET request to the API.
-   * @param {string} url - The URL for the API request.
-   * @param {object} [query] - The query parameters for the API request.
-   * @param {object} [options] - The options for the API request.
-   * @returns {Promise<object>} - A promise that resolves to the API response.
-   */
-  async get(url, query, options) {
-    return this.request({method: 'GET', url, query, ...options});
-  }
+	/**
+	 * Wrapper for making POST requests.
+	 *
+	 * @param {string} url - The endpoint URL after the base URL.
+	 * @param {object} [body] - The body of the request.
+	 * @param {object} [options] - Additional options for the request.
+	 * @returns {Promise<object>} - A promise that resolves to the response object.
+	 */
+	post(url, body, options = {}) {
+		return this.request({ ...options, method: "POST", url, body });
+	}
 
-  /**
-   * Sends a POST request to the API.
-   * @param {string} url - The URL for the API request.
-   * @param {object} [body] - The body for the API request.
-   * @param {object} [options] - The options for the API request.
-   * @returns {Promise<object>} - A promise that resolves to the API response.
-   */
-  async post(url, body, options) {
-    return this.request({method: 'POST', url, body, ...options});
-  }
+	/**
+	 * Wrapper for making PUT requests.
+	 *
+	 * @param {string} url - The endpoint URL after the base URL.
+	 * @param {object} [body] - The body of the request.
+	 * @param {object} [options] - Additional options for the request.
+	 * @returns {Promise<object>} - A promise that resolves to the response object.
+	 */
+	put(url, body, options = {}) {
+		return this.request({ ...options, method: "PUT", url, body });
+	}
 
-  /**
-   * Sends a PUT request to the API.
-   * @param {string} url - The URL for the API request.
-   * @param {object} [body] - The body for the API request.
-   * @param {object} [options] - The options for the API request.
-   * @returns {Promise<object>} - A promise that resolves to the API response.
-   */
-  async put(url, body, options) {
-    return this.request({method: 'PUT', url, body, ...options});
-  }
-
-  /**
-   * Sends a DELETE request to the API.
-   * @param {string} url - The URL for the API request.
-   * @param {object} [options] - The options for the API request.
-   * @returns {Promise<object>} - A promise that resolves to the API response.
-   */
-  async delete(url, options) {
-    return this.request({method: 'DELETE', url, ...options});
-  }
+	/**
+	 * Wrapper for making DELETE requests.
+	 *
+	 * @param {string} url - The endpoint URL after the base URL.
+	 * @param {object} [options] - Additional options for the request.
+	 * @returns {Promise<object>} - A promise that resolves to the response object.
+	 */
+	delete(url, options = {}) {
+		return this.request({ ...options, method: "DELETE", url });
+	}
 }
