@@ -35,7 +35,6 @@ user_model = auth_ns.model(
 
 
 @auth_ns.route(LOGIN_ENDPOINT)
-@auth_ns.route(SIGNIN_ENDPOINT)
 class Login(Resource):
     @auth_ns.expect(user_model)
     @auth_ns.response(200, "Login succeeded")
@@ -66,7 +65,6 @@ class Login(Resource):
 
 
 @auth_ns.route(REGISTER_ENDPOINT)
-@auth_ns.route(SIGNUP_ENDPOINT)
 class Register(Resource):
     @auth_ns.expect(user_model)
     @auth_ns.response(201, "Created a new user")
@@ -106,7 +104,6 @@ class Register(Resource):
 
 
 @auth_ns.route(LOGOUT_ENDPOINT)
-@auth_ns.route(SIGNOUT_ENDPOINT)
 class Logout(Resource):
     @auth_ns.response(200, "Successfully logged out")
     @auth_ns.response(400, "Failed to log out")
