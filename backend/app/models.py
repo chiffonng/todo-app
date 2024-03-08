@@ -109,10 +109,6 @@ class Task(db.Model):
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True, autoincrement=True)
     name: so.Mapped[str] = so.mapped_column(sa.String(100))
-
-    due_date: so.Mapped[str] = so.mapped_column(
-        sa.String, default=sa.func.current_date(type_=sa.String)
-    )
     is_completed: so.Mapped[bool] = so.mapped_column(sa.Boolean, default=False)
     parent_id: so.Mapped[Optional[int]] = so.mapped_column(
         sa.ForeignKey("tasks.id"), nullable=True
