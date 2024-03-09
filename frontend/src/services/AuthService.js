@@ -29,6 +29,8 @@ class AuthService extends ApiService {
 						throw new Error("Failed to log in");
 					case 401:
 						throw new Error("Invalid username or password");
+					case 404:
+						throw new Error("User not found");
 					case 500:
 						throw new Error("Internal server error");
 					default:

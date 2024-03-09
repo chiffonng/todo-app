@@ -1,6 +1,4 @@
 import axios from "axios";
-import { API_BASE_URL } from "../utils/constants";
-
 /**
  * ApiService class acts as a HTTP client using Axios.
  * This service is responsible for sending API requests to the backend.
@@ -13,7 +11,7 @@ export default class ApiService {
 	constructor() {
 		// Create an Axios instance with default configuration
 		this.axiosInstance = axios.create({
-			baseURL: API_BASE_URL, // Set the base URL for all requests
+			baseURL: "/",
 			withCredentials: true, // Indicates whether or not cross-site Access-Control requests should be made using credentials
 			headers: {
 				"Content-Type": "application/json", // Set default headers for requests to 'application/json'

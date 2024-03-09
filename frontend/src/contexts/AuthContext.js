@@ -1,5 +1,6 @@
 import React, {
 	createContext,
+	useContext,
 	useState,
 	useEffect,
 	useMemo,
@@ -14,78 +15,103 @@ export const AuthProvider = ({ children }) => {
 	const [currentUser, setCurrentUser] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-	// Memoizing authService instance
 	const authService = useMemo(() => new AuthService(), []);
 
 	useEffect(() => {
+		console.log("Checking currentUser for authentication:", currentUser);
 		setIsAuthenticated(currentUser !== null);
+		setLoading(false); // Set loading to false once currentUser is checked
 	}, [currentUser]);
 
-	// Function to update user state on successful login
 	const login = useCallback(
 		async (username, password) => {
+			console.log("Login attempt:", username);
 			setLoading(true);
-			const response = await authService.login(username, password);
-			if (!response.error) {
-				setCurrentUser(response);
-				localStorage.setItem("user", JSON.stringify(response));
+			try {
+				const response = await authService.login(username, password);
+				console.log("Login response:", response);
+				if (response.status === 200) {
+					setCurrentUser(response.data.user);
+					setIsAuthenticated(true);
+				} else {
+					throw new Error(
+						response.data ? response.data.message : "An unknown error occurred"
+					);
+				}
+			} catch (error) {
+				console.error("Login error:", error);
+			} finally {
+				setLoading(false);
 			}
-			setLoading(false);
-			return response;
 		},
 		[authService]
 	);
 
-	// Function to clear user state on logout
 	const logout = useCallback(async () => {
-		const response = await authService.logout();
-		if (response.success) {
-			setCurrentUser(null);
-			localStorage.removeItem("user");
+		console.log("Logout attempt");
+		try {
+			const response = await authService.logout();
+			console.log("Logout response:", response);
+			if (response.status === 200) {
+				setCurrentUser(null);
+				setIsAuthenticated(false);
+			} else {
+				throw new Error(response.data.message);
+			}
+		} catch (error) {
+			console.error("Logout error:", error);
 		}
-		return response;
 	}, [authService]);
 
-	// Function to update user state on successful registration
 	const register = useCallback(
 		async (username, password) => {
+			console.log("Register attempt:", username);
 			setLoading(true);
-			const response = await authService.register(username, password);
-			setLoading(false);
-			return response;
+			try {
+				const response = await authService.register(username, password);
+				console.log("Register response:", response);
+				return response;
+			} finally {
+				setLoading(false);
+			}
 		},
 		[authService]
 	);
 
-	useEffect(() => {
-		// Check if user data is stored in local storage and update state
-		const user = JSON.parse(localStorage.getItem("user"));
-		if (user) {
-			setCurrentUser(user);
-		}
-		setLoading(false);
-	}, []);
+	const contextValue = useMemo(() => {
+		console.log("Updating AuthContext value");
+		return {
+			currentUser,
+			isAuthenticated,
+			login,
+			logout,
+			register,
+			loading,
+		};
+	}, [currentUser, isAuthenticated, login, logout, register]);
 
-	return useMemo(
-		() => (
-			<AuthContext.Provider
-				value={{
-					currentUser,
-					isAuthenticated,
-					login,
-					logout,
-					register,
-					loading,
-				}}
-			>
-				{!loading && children}
-			</AuthContext.Provider>
-		),
-		[currentUser, isAuthenticated, login, logout, register, loading, children]
+	console.log("Rendering AuthProvider", {
+		currentUser,
+		isAuthenticated,
+		loading,
+	});
+
+	return (
+		<AuthContext.Provider value={contextValue}>
+			{!loading ? children : null}
+		</AuthContext.Provider>
 	);
 };
 
 AuthProvider.propTypes = {
 	children: PropTypes.node.isRequired,
 };
+
+export function useAuth() {
+	const context = useContext(AuthContext);
+	if (!context) {
+		throw new Error("useAuth must be used within an AuthProvider");
+	}
+	return context;
+}
+export default AuthProvider;
