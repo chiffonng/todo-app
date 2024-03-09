@@ -41,22 +41,27 @@ class GetAllLists(Resource):
     @login_required
     @list_ns.marshal_with(list_model, as_list=True)
     @list_ns.response(200, "Succesfully retrieved all lists")
-    @list_ns.response(400, "Failed to retrieve lists")
+    @list_ns.response(500, "Failed to retrieve lists")
     def get(self):
         """Get all lists of the current user from the database."""
 
         try:
             lists = (
                 db.session.execute(
-                    select(TaskList).where(TaskList.user_id == current_user.id)
+                    db.select(TaskList)
+                    .filter_by(user_id == current_user.id)
+                    .order_by(name)
                 )
                 .scalars()  # Convert the result to a list
                 .all()  # Get all the results
             )
 
-            return {"lists": [task_list.to_dict() for task_list in lists]}, 200
+            return {
+                "message": "Succesfully retrieved all lists",
+                "lists": [task_list.to_dict() for task_list in lists],
+            }, 200
         except Exception as e:
-            task_ns.abort(400, f"Failed to retrieve lists. Error: {e}")
+            return {"message": f"Failed to retrieve lists. Error: {e}"}, 500
 
 
 @list_ns.route(GET_LIST_ENDPOINT)
@@ -67,9 +72,11 @@ class GetList(Resource):
     @list_ns.response(404, "List not found")
     def get(self, list_id: int):
         """Get a specific list by its ID."""
-        task_list = db.session.get(TaskList, list_id)
+        task_list = db.session.execute(
+            db.select(TaskList).filter_by(id=list_id)
+        ).scalar_one_or_none()
         if not task_list:
-            list_ns.abort(404, message="List not found")
+            return {"message": f"List with ID {list_id} not found."}, 404
         return task_list.to_dict(), 200
 
 
@@ -94,7 +101,7 @@ class CreateList(Resource):
 
         except Exception as e:
             db.session.rollback()
-            list_ns.abort(500, f"Failed to create a new list. Error: {e}")
+            return {"message": f"Failed to create list. Error: {e}"}, 500
 
 
 @list_ns.route(DELETE_LIST_ENDPOINT)
@@ -106,10 +113,12 @@ class DeleteList(Resource):
     def delete(self, list_id: int):
         """Delete a specific list."""
         try:
-            task_list = db.session.get(TaskList, list_id)
+            task_list = db.session.execute(
+                db.select(TaskList).filter_by(id=list_id)
+            ).scalar_one_or_none()
 
             if not task_list:
-                list_ns.abort(404, f"List with ID {list_id} not found.")
+                return {"message": f"List with ID {list_id} not found."}, 404
 
             db.session.delete(task_list)
             db.session.commit()
@@ -118,7 +127,7 @@ class DeleteList(Resource):
 
         except Exception as e:
             db.session.rollback()
-            list_ns.abort(500, f"Failed to delete list. Error: {e}")
+            return {"message": f"Failed to delete list. Error: {e}"}, 500
 
 
 @list_ns.route(EDIT_LIST_ENDPOINT)
@@ -134,10 +143,12 @@ class EditList(Resource):
         name = args["name"]
 
         try:
-            task_list = db.session.get(TaskList, list_id)
+            task_list = db.session.execute(
+                db.select(TaskList).filter_by(id=list_id)
+            ).scalar_one()
 
             if not task_list:
-                list_ns.abort(404, f"List with ID {list_id} not found.")
+                return {"message": f"List with ID {list_id} not found."}, 404
 
             task_list.name = name
             db.session.commit()
@@ -148,4 +159,4 @@ class EditList(Resource):
 
         except Exception as e:
             db.session.rollback()
-            list_ns.abort(500, f"Server failed to update list. Error: {e}")
+            return {"message": f"Failed to update list. Error: {e}"}, 500

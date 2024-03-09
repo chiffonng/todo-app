@@ -11,9 +11,6 @@ from .uri import (
     LOGIN_ENDPOINT,
     LOGOUT_ENDPOINT,
     REGISTER_ENDPOINT,
-    SIGNIN_ENDPOINT,
-    SIGNOUT_ENDPOINT,
-    SIGNUP_ENDPOINT,
 )
 
 auth_ns = api.namespace("auth", description="User authentication", path=AUTH_ENDPOINT)
@@ -27,7 +24,7 @@ user_model = auth_ns.model(
         "password": fields.String(
             required=True,
             description="The plaintext password",
-            min_length=6,
+            min_length=3,
             max_length=64,
         ),
     },
@@ -48,70 +45,59 @@ class Login(Resource):
             username = request.json.get("username")
             password = request.json.get("password")
 
-            query_user = db.select(User).where(User.username == username)
+            query_user = db.select(User).filter_by(username=username)
             user = db.session.execute(query_user).scalar_one_or_none()
 
             # if user exists and password is correct
-            if user and user.is_password_valid(password):
+            if user and user.is_password_correct(password):
                 login_user(user)
-                return (
-                    jsonify({"message": "Login succeeded", "user": user.to_dict()}),
-                    200,
-                )
+                return {"message": "Login succeeded", "user": user.to_dict()}, 200
             else:
-                return jsonify({"message": "Invalid username or password"}), 401
+                return {"message": "Invalid username or password"}, 401
         except Exception as e:
-            return jsonify({"error": e}), 400
+            return {"message": f"Failed to log in. Error: {e}"}, 500
 
 
 @auth_ns.route(REGISTER_ENDPOINT)
 class Register(Resource):
     @auth_ns.expect(user_model)
     @auth_ns.response(201, "Created a new user")
-    @auth_ns.response(400, "Failed to create a user")
+    @auth_ns.response(400, "Failed to create a new user")
+    @auth_ns.response(500, "Internal server error")
     def post(self) -> Tuple[Response, int]:
         """Create a new user."""
         try:
             username = request.json.get("username")
             password = request.json.get("password")
 
-            user_exists = db.session.execute(
-                db.select(User).where(User.username == username).scalar_one_or_none()
-            )
-
+            query_user = db.select(User).filter_by(username=username)
+            user_exists = db.session.execute(query_user).scalar_one_or_none()
             if user_exists:
-                return jsonify({"message": "Username already exists"}), 400
+                return {"message": "Username already exists"}, 400
 
             new_user = User(username=username, password=password)
             db.session.add(new_user)
             db.session.commit()
 
-            return (
-                jsonify(
-                    {
-                        "message": "Successfully created a new user",
-                        "user": new_user.to_dict(),
-                    }
-                ),
-                201,
-            )
+            return {
+                "message": "Successfully created a new user",
+            }, 201
+
         except Exception as e:
             db.session.rollback()
-            return (
-                jsonify({"message": f"Failed to create a new user. Error {e}"}),
-                400,
-            )
+            return {"message": f"Failed to create a new user. Error: {e}"}, 500
 
 
 @auth_ns.route(LOGOUT_ENDPOINT)
 class Logout(Resource):
     @auth_ns.response(200, "Successfully logged out")
     @auth_ns.response(400, "Failed to log out")
+    @auth_ns.response(500, "Internal server error")
     def post(self) -> Tuple[Response, int]:
         """Log out a user."""
 
         try:
             logout_user()
-            return jsonify({"message": "Successfully logged out"}), 200
+            return {"message": "Successfully logged out"}, 200
         except Exception as e:
-            return jsonify({"message": f"Error {e}"}), 400
+            return {"message": f"Failed to log out. Error: {e}"}, 500

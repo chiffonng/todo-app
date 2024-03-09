@@ -50,6 +50,12 @@ class User(UserMixin, db.Model):
         """Set the user's password."""
         self.password_hash = generate_password_hash(password)
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+        }
+
 
 class TaskList(db.Model):
     """

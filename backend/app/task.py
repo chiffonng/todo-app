@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from flask_restx import Resource, fields
 
 from . import db, api
-from .models import Task
+from .models import Task, TaskList
 from .uri import (
     TASKS_ENDPOINT,
     GET_TASKS_ENDPOINT,
@@ -58,11 +58,22 @@ class GetTasks(Resource):
     @task_ns.response(404, "List not found")
     def get(self, list_id: int):
         """Get all tasks from a specific list."""
-        task_list = db.session.get(TaskList, list_id)
+        task_list = (
+            db.session.execute(
+                db.select(Task)
+                .join(TaskList, Task.list_id == TaskList.id)
+                .filter(TaskList.id == list_id)
+            )
+            .scalars()
+            .all()
+        )
         if not task_list:
-            task_ns.abort(404, message="List not found")
+            return {"message": f"List with id {list_id} not found."}, 404
         tasks = task_list.tasks
-        return {"tasks": [task.to_dict() for task in tasks]}, 200
+        return {
+            "message": f"Successfully retrieved tasks from list with id {list_id}.",
+            "tasks": [task.to_dict() for task in tasks],
+        }, 200
 
 
 @task_ns.route(GET_TASK_ENDPOINT)
@@ -70,12 +81,16 @@ class GetTask(Resource):
     @login_required
     @task_ns.marshal_with(task_model, code=200)
     @task_ns.response(404, "Task not found")
-    def get(self, task_id: int):
+    def get(self, list_id: int, task_id: int):
         """Get a specific task by its ID."""
-        task = db.session.get(Task, task_id)
+        task = db.session.execute(
+            db.select(
+                TaskList,
+            ).filter_by(id=task_id)
+        ).scalar_one_or_none()
         if not task:
-            task_ns.abort(404, description="Task not found")
-        return task.to_dict()
+            return {"message": f"Task with id {task_id} not found."}, 404
+        return task.to_dict(), 200
 
 
 @task_ns.route(GET_SUBTASKS_ENDPOINT)
@@ -86,7 +101,7 @@ class GetSubtasks(Resource):
     @task_ns.response(404, "Task not found")
     def get(self, task_id: int):
         """Get immediate subtasks of a task."""
-        task = db.session.get(Task, task_id)
+        task = db.session.get(Task, id=task_id)
         if not task:
             task_ns.abort(404, description="Task not found")
 

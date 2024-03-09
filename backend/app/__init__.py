@@ -8,7 +8,7 @@ from .uri import API_ENDPOINT
 
 db = SQLAlchemy()
 login_manager = LoginManager()
-api = Api(version="0.1", doc=API_ENDPOINT, title="Todo API", validate=True)
+api = Api(version="0.1", title="Todo API", validate=True)
 
 
 def create_app(test_config=None):
