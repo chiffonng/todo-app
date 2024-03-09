@@ -1,2 +1,2 @@
-FLASK_APP = backend/main.py
+FLASK_APP = main.py
 FLASK_DEBUG = 1

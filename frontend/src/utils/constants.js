@@ -1,5 +1,5 @@
-export const API_BASE_URL = "http://127.0.0.1:5000/api";
-export const SWAGGER_BASE_URL = "http://127.0.0.1:5000/swagger.json";
+export const API_BASE_URL = "/api";
+export const SWAGGER_BASE_URL = "swagger.json";
 
 // Define endpoint paths
 export const AUTH_ENDPOINTS = {
