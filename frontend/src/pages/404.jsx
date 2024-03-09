@@ -1,6 +1,7 @@
 import React from "react";
 import { Typography, Button, Container } from "@mui/material";
 import SentimentDissatisfiedIcon from "@mui/icons-material/SentimentDissatisfied";
+import { ROUTES } from "../utils/constants";
 
 const NotFoundPage = () => {
 	return (
@@ -24,8 +25,8 @@ const NotFoundPage = () => {
 				The page you are looking for might have been removed, had its name
 				changed, or is temporarily unavailable.
 			</Typography>
-			<Button variant="contained" color="primary" href="/">
-				Go to the Home Page
+			<Button variant="contained" color="primary" href={ROUTES.LOGIN}>
+				Go to the Login Page
 			</Button>
 		</Container>
 	);

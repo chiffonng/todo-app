@@ -16,34 +16,60 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import useAuth from "../../hooks/useAuth";
+import Alert from "@mui/material/Alert";
+
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 import { ROUTES } from "../../utils/constants";
 
 export default function RegisterForm() {
+	const navigate = useNavigate();
 	const { register } = useAuth();
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
-	const [showPassword, setShowPassword] = useState(false);
+	const [confirmPassword, setConfirmPassword] = useState("");
+	const [errorMessage, setErrorMessage] = useState("");
 
+	const [showPassword, setShowPassword] = useState(false);
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+	// Toggle password visibility for password and confirm password fields
 	const handlePasswordVisibility = () => {
-		setShowPassword(!showPassword); // Toggle the showPassword state
+		setShowPassword(!showPassword);
+	};
+	const handleConfirmPasswordVisibility = () => {
+		setShowConfirmPassword(!showConfirmPassword);
+	};
+
+	// Validate form fields
+	const isFormValid = () => {
+		if (!username || !password || !confirmPassword) {
+			setErrorMessage("All fields are required");
+			return false;
+		} else if (password !== confirmPassword) {
+			setErrorMessage("Passwords do not match");
+			return false;
+		}
+		return true;
 	};
 
 	const handleSubmit = async (event) => {
 		event.preventDefault();
-		// Handle the form submission
+		setErrorMessage(""); // Reset error message
+		if (!isFormValid()) {
+			return;
+		}
 		try {
 			const response = await register(username, password);
 			if (response.error) {
-				// Handle error here
-				console.log(response.error);
+				setErrorMessage(response.error);
 			} else {
-				// Handle successful registration here
-				console.log("Registered successfully");
+				// Redirect to login page
+				navigate(ROUTES.LOGIN);
 			}
 		} catch (error) {
-			// Handle exception here
-			console.log(error);
+			console.error(error);
+			setErrorMessage("Signup failed. Please try again.");
 		}
 	};
 
@@ -71,7 +97,12 @@ export default function RegisterForm() {
 				<Typography component="h1" variant="h5">
 					Register
 				</Typography>
-				<Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1 }}>
+				<Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+					{errorMessage && (
+						<Alert severity="error" sx={{ mb: 2 }}>
+							{errorMessage}
+						</Alert>
+					)}
 					<TextField
 						margin="normal"
 						required
@@ -115,6 +146,34 @@ export default function RegisterForm() {
 										onClick={handlePasswordVisibility}
 									>
 										{showPassword ? <VisibilityOff /> : <Visibility />}
+									</IconButton>
+								</InputAdornment>
+							),
+						}}
+					/>
+					<TextField
+						margin="normal"
+						required
+						fullWidth
+						name="confirmPassword"
+						label="Confirm Password"
+						type={showConfirmPassword ? "text" : "password"} // Toggle between text and password
+						id="confirmPassword"
+						value={confirmPassword}
+						onChange={(e) => setConfirmPassword(e.target.value)}
+						InputProps={{
+							startAdornment: (
+								<InputAdornment position="start">
+									<LockOutlinedIcon />
+								</InputAdornment>
+							),
+							endAdornment: (
+								<InputAdornment position="end">
+									<IconButton
+										aria-label="toggle confirm password visibility"
+										onClick={handleConfirmPasswordVisibility}
+									>
+										{showConfirmPassword ? <VisibilityOff /> : <Visibility />}
 									</IconButton>
 								</InputAdornment>
 							),

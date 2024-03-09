@@ -1,6 +1,6 @@
 import React from "react";
 import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
-import useAuth from "../../hooks/useAuth";
+import { useAuth } from "../../contexts/AuthContext";
 import { ROUTES } from "../../utils/constants";
 
 export default function Navbar() {
