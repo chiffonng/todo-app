@@ -74,7 +74,7 @@ class TaskList(db.Model):
     __tablename__ = "task_lists"
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True, autoincrement=True)
-    name: so.Mapped[str] = so.mapped_column(sa.String(100), index=True)
+    name: so.Mapped[str] = so.mapped_column(sa.String(100), index=True, unique=True)
     user_id: so.Mapped[int] = so.mapped_column(sa.Integer, sa.ForeignKey("users.id"))
 
     user: so.Mapped["User"] = so.relationship(back_populates="task_lists")
@@ -83,12 +83,13 @@ class TaskList(db.Model):
     )
 
     def to_dict(self):
-        """Add top-level tasks to the list"""
+        """Convert the task list to a dictionary."""
 
         return {
             "id": self.id,
             "name": self.name,
             "user_id": self.user_id,
+            "tasks": [task.to_dict() for task in self.tasks],
         }
 
 
@@ -130,7 +131,6 @@ class Task(db.Model):
         return {
             "id": self.id,
             "name": self.name,
-            "due_date": self.due_date,
             "is_completed": self.is_completed,
             "parent_id": self.parent_id,
             "list_id": self.list_id,

@@ -3,6 +3,7 @@ from typing import Tuple
 from flask import Response, jsonify, request
 from flask_login import login_user, logout_user
 from flask_restx import Namespace, Resource, fields
+from sqlalchemy.exc import IntegrityError
 
 from . import api, db
 from .models import User
@@ -51,8 +52,7 @@ class Login(Resource):
             # if user exists and password is correct
             if user and user.is_password_correct(password):
                 login_user(user, remember=True)
-                print(user)
-                return {"message": "Login succeeded", "user": user.to_dict()}, 200
+                return {"message": "Successful login", "user": user.to_dict()}, 200
             else:
                 return {"message": "Invalid username or password"}, 401
         except Exception as e:
@@ -73,8 +73,8 @@ class Register(Resource):
 
             query_user = db.select(User).filter_by(username=username)
             user_exists = db.session.execute(query_user).scalar_one_or_none()
-            if user_exists:
-                return {"message": "Username already exists"}, 400
+            if user_exists or IntegrityError:
+                return {"message": "User already exists"}, 400
 
             new_user = User(username=username, password=password)
             db.session.add(new_user)
