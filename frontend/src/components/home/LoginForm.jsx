@@ -23,7 +23,7 @@ import { ROUTES } from "../../utils/constants";
 
 const LoginForm = () => {
 	const navigate = useNavigate();
-	const { login } = useAuth();
+	const { login, isAuthenticated, getCurrentUser } = useAuth();
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
@@ -54,16 +54,10 @@ const LoginForm = () => {
 		}
 
 		try {
-			const response = await login(username, password);
-			if (response && response.error) {
-				setErrorMessage(response.error);
-			} else {
-				// Redirect to home page
-				navigate("/");
-			}
+			await login(username, password);
+			navigate(ROUTES.HOME);
 		} catch (error) {
-			setErrorMessage("An error occurred. Please try again later.");
-			console.log(error);
+			setErrorMessage(error.message);
 		}
 	};
 
@@ -85,17 +79,17 @@ const LoginForm = () => {
 					mx: "auto", // Horizontally centers the Paper component in its Grid container
 				}}
 			>
-				{errorMessage && (
-					<Alert severity="error" sx={{ mb: 2 }}>
-						{errorMessage}
-					</Alert>
-				)}
 				<Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
 					<LockOutlinedIcon />
 				</Avatar>
 				<Typography component="h1" variant="h5">
 					Log in
 				</Typography>
+				{errorMessage && (
+					<Alert severity="error" sx={{ m: 2, alignItems: "flex-start" }}>
+						{errorMessage}
+					</Alert>
+				)}
 				<Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1 }}>
 					<TextField
 						margin="normal"

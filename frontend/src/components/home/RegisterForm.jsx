@@ -10,7 +10,7 @@ import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import PersonIcon from "@mui/icons-material/Person";
+import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import InputAdornment from "@mui/material/InputAdornment";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
@@ -46,8 +46,8 @@ export default function RegisterForm() {
 		if (!username || !password || !confirmPassword) {
 			setErrorMessage("All fields are required");
 			return false;
-		} else if (password.length < 6) {
-			setErrorMessage("Password must be at least 6 characters long");
+		} else if (password.length < 3) {
+			setErrorMessage("Password must be at least 3 characters long");
 			return false;
 		} else if (password !== confirmPassword) {
 			setErrorMessage("Passwords do not match");
@@ -72,7 +72,7 @@ export default function RegisterForm() {
 			}
 		} catch (error) {
 			console.error(error);
-			setErrorMessage("Signup failed. Please try again.");
+			setErrorMessage(error.message);
 		}
 	};
 
@@ -120,7 +120,7 @@ export default function RegisterForm() {
 						InputProps={{
 							startAdornment: (
 								<InputAdornment position="start">
-									<PersonIcon />
+									<PersonOutlinedIcon />
 								</InputAdornment>
 							),
 						}}

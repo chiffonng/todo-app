@@ -6,13 +6,7 @@ import sqlalchemy.orm as so
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from backend.app import db, login_manager
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    return db.session.get(User, user_id)
-
+from backend.app import db
 
 class User(UserMixin, db.Model):
     """

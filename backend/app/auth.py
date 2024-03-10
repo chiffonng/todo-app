@@ -5,13 +5,14 @@ from flask_login import login_user, logout_user
 from flask_restx import Namespace, Resource, fields
 from sqlalchemy.exc import IntegrityError
 
-from . import api, db
+from . import api, db, login_manager
 from .models import User
 from .uri import (
     AUTH_ENDPOINT,
     LOGIN_ENDPOINT,
     LOGOUT_ENDPOINT,
     REGISTER_ENDPOINT,
+    CURRENT_USER_ENDPOINT,
 )
 from .utils import standardize_response
 
@@ -31,6 +32,11 @@ user_model = auth_ns.model(
         ),
     },
 )
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.get(User, user_id)
 
 
 @auth_ns.route(LOGIN_ENDPOINT)
@@ -76,9 +82,11 @@ class Register(Resource):
             username = request.json.get("username")
             password = request.json.get("password")
 
-            query_user = db.select(User).filter_by(username=username)
-            user_exists = db.session.execute(query_user).scalar_one_or_none()
-            if user_exists or IntegrityError:
+            user_exists = db.session.execute(
+                db.select(User).filter_by(username=username)
+            ).scalar_one_or_none()
+
+            if user_exists is not None:
                 return standardize_response(
                     "Username already exists. Please choose a different one", 400
                 )
@@ -111,3 +119,25 @@ class Logout(Resource):
             return standardize_response("Successfully logged out", 200)
         except Exception as e:
             return standardize_response(f"Failed to log out. Error: {e}", 500)
+
+
+@auth_ns.route(CURRENT_USER_ENDPOINT)
+class CurrentUser(Resource):
+    @auth_ns.response(200, "User information")
+    @auth_ns.response(400, "Failed to get user information")
+    @auth_ns.response(500, "Internal server error")
+    def get(self) -> Tuple[Response, int]:
+        """Get user information."""
+        try:
+            if not request.user.is_authenticated:
+                return standardize_response("User is not authenticated", 400)
+
+            return standardize_response(
+                "Successfully retrieved user information",
+                200,
+                {"username": request.user.username, "id": request.user.id},
+            )
+        except Exception as e:
+            return standardize_response(
+                f"Failed to get user information. Error: {e}", 500
+            )

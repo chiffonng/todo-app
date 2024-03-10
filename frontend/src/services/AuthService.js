@@ -4,14 +4,15 @@ import ApiService from "./ApiService";
 /**
  * AuthService class for handling authentication-related API calls.
  * Extends ApiService to utilize common HTTP request functionalities.
+ * Using ApiService, response is standardized to { ok: boolean, status: number, body: object }. body has { message: string, data: object } from the backend.
  */
-class AuthService extends ApiService {
+export default class AuthService extends ApiService {
 	/**
-	 * Log in a user with provided credentials.
+	 * Log in a user with a username and password asynchronously.
 	 *
-	 * @param {string} username - The username of the user.
-	 * @param {string} password - The password of the user.
-	 * @returns {Promise<object>} A promise that resolves to the response of the login request.
+	 * @param {string} username - The username.
+	 * @param {string} password - The plaintext password.
+	 * @returns {Promise<object>} - A promise that resolves to the response object.
 	 */
 	async login(username, password) {
 		try {
@@ -19,57 +20,25 @@ class AuthService extends ApiService {
 				username,
 				password,
 			});
+
 			if (response.ok) {
-				// Successful login
-				return response.body;
+				return response.body.data ? response.body.data : response.body.message;
 			} else {
-				// Handle possible errors based on the response status code
-				switch (response.status) {
-					case 400:
-						throw new Error("Failed to log in");
-					case 401:
-						throw new Error("Invalid username or password");
-					case 404:
-						throw new Error("User not found");
-					case 500:
-						throw new Error("Internal server error");
-					default:
-						throw new Error("An unknown error occurred");
-				}
+				throw new Error(response.body.message);
 			}
 		} catch (error) {
-			// Error handling in case of request failure
-			return { error: error.message };
+			// Handle any errors that occur during the request
+			console.error("Login error:", error);
+			throw error;
 		}
 	}
 
 	/**
-	 * Log out the current user.
+	 * Register a new user asynchronously.
 	 *
-	 * @returns {Promise<object>} A promise that resolves to the response of the logout request.
-	 */
-	async logout() {
-		try {
-			const response = await this.post(AUTH_ENDPOINTS.LOGOUT);
-			if (response.ok) {
-				// Successful logout
-				return { success: true };
-			} else {
-				// Handle errors during logout
-				throw new Error("Failed to log out");
-			}
-		} catch (error) {
-			// Error handling in case of request failure
-			return { error: error.message };
-		}
-	}
-
-	/**
-	 * Register a new user with the provided credentials.
-	 *
-	 * @param {string} username - The username of the new user.
-	 * @param {string} password - The password of the new user.
-	 * @returns {Promise<object>} A promise that resolves to the response of the register request.
+	 * @param {string} username - The username.
+	 * @param {string} password - The plaintext password.
+	 * @returns {Promise<object>} - A promise that resolves to the response object.
 	 */
 	async register(username, password) {
 		try {
@@ -77,25 +46,55 @@ class AuthService extends ApiService {
 				username,
 				password,
 			});
-			if (response.status === 201) {
-				// Successful user registration
-				return response.body;
+			if (response.ok) {
+				return response.body.data ? response.body.data : response.body.message;
 			} else {
-				// Handle errors during user registration
-				switch (response.status) {
-					case 400:
-						throw new Error("Failed to create a user");
-					case 500:
-						throw new Error("Internal server error");
-					default:
-						throw new Error("An unknown error occurred");
-				}
+				throw new Error(response.body.message);
 			}
 		} catch (error) {
-			// Error handling in case of request failure
-			return { error: error.message };
+			// Handle any errors that occur during the request
+			console.error("Register error:", error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Log out the current user asynchronously.
+	 *
+	 * @returns {Promise<string>} - A promise that resolves to the logout message.
+	 */
+	async logout() {
+		try {
+			const response = await this.post(AUTH_ENDPOINTS.LOGOUT);
+
+			if (response.ok) {
+				return response.body.message;
+			} else {
+				throw new Error(response.body.message);
+			}
+		} catch (error) {
+			console.error("Logout error:", error);
+			return Promise.reject(error);
+		}
+	}
+
+	/**
+	 * Get the current user asynchronously.
+	 *
+	 * @returns {Promise<object>} - A promise that resolves to the current user data.
+	 */
+	async getCurrentUser() {
+		try {
+			const response = await this.get(AUTH_ENDPOINTS.CURRENT_USER);
+
+			if (response.ok) {
+				return response.body.data;
+			} else {
+				throw new Error(response.body.message);
+			}
+		} catch (error) {
+			console.error("Get current user error:", error);
+			return Promise.reject(error);
 		}
 	}
 }
-
-export default AuthService;

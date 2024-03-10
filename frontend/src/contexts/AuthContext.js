@@ -9,103 +9,12 @@ import React, {
 import AuthService from "../services/AuthService";
 import PropTypes from "prop-types";
 
-export const AuthContext = createContext(null);
+const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-	const [currentUser, setCurrentUser] = useState(null);
-	const [loading, setLoading] = useState(true);
-	const [isAuthenticated, setIsAuthenticated] = useState(false);
-	const authService = useMemo(() => new AuthService(), []);
-
-	useEffect(() => {
-		console.log("Checking currentUser for authentication:", currentUser);
-		setIsAuthenticated(currentUser !== null);
-		setLoading(false); // Set loading to false once currentUser is checked
-	}, [currentUser]);
-
-	const login = useCallback(
-		async (username, password) => {
-			console.log("Login attempt:", username);
-			setLoading(true);
-			try {
-				const response = await authService.login(username, password);
-				console.log("Login response:", response);
-				if (response.status === 200) {
-					setCurrentUser(response.data.user);
-					setIsAuthenticated(true);
-				} else {
-					throw new Error(
-						response.data ? response.data.message : "An unknown error occurred"
-					);
-				}
-			} catch (error) {
-				console.error("Login error:", error);
-			} finally {
-				setLoading(false);
-			}
-		},
-		[authService]
-	);
-
-	const logout = useCallback(async () => {
-		console.log("Logout attempt");
-		try {
-			const response = await authService.logout();
-			console.log("Logout response:", response);
-			if (response.status === 200) {
-				setCurrentUser(null);
-				setIsAuthenticated(false);
-			} else {
-				throw new Error(response.data.message);
-			}
-		} catch (error) {
-			console.error("Logout error:", error);
-		}
-	}, [authService]);
-
-	const register = useCallback(
-		async (username, password) => {
-			console.log("Register attempt:", username);
-			setLoading(true);
-			try {
-				const response = await authService.register(username, password);
-				console.log("Register response:", response);
-				return response;
-			} finally {
-				setLoading(false);
-			}
-		},
-		[authService]
-	);
-
-	const contextValue = useMemo(() => {
-		console.log("Updating AuthContext value");
-		return {
-			currentUser,
-			isAuthenticated,
-			login,
-			logout,
-			register,
-			loading,
-		};
-	}, [currentUser, isAuthenticated, login, logout, register]);
-
-	console.log("Rendering AuthProvider", {
-		currentUser,
-		isAuthenticated,
-		loading,
-	});
-
-	return (
-		<AuthContext.Provider value={contextValue}>
-			{!loading ? children : null}
-		</AuthContext.Provider>
-	);
-};
-
-AuthProvider.propTypes = {
-	children: PropTypes.node.isRequired,
-};
+/** Custom hook to use the authentication context.
+ *
+ * @returns {object} - The authentication context.
+ */
 
 export function useAuth() {
 	const context = useContext(AuthContext);
@@ -114,4 +23,116 @@ export function useAuth() {
 	}
 	return context;
 }
-export default AuthProvider;
+
+/** Provider component to wrap the application and provide authentication context.
+ *
+ * @param {object} children - The children to render.
+ * @returns {object} - The authentication context provider.
+ **/
+export const AuthProvider = ({ children }) => {
+	const [currentUser, setCurrentUser] = useState(null);
+	const [isAuthenticated, setIsAuthenticated] = useState(null);
+	const [isLoading, setIsLoading] = useState(false);
+
+	const authService = useMemo(() => new AuthService(), []);
+
+	const login = useCallback(
+		async (username, password) => {
+			setIsLoading(true);
+			try {
+				const response = await authService.login(username, password);
+				if (response && response.username) {
+					setCurrentUser(response);
+					setIsAuthenticated(true);
+					return response;
+				}
+			} catch (error) {
+				console.error("Login error:", error);
+				throw error;
+			} finally {
+				setIsLoading(false);
+			}
+		},
+		[authService]
+	);
+
+	const register = useCallback(
+		async (username, password) => {
+			setIsLoading(true);
+			try {
+				const response = await authService.register(username, password);
+				if (response && response.username) {
+					return response;
+				}
+			} catch (error) {
+				console.error("Registration error:", error);
+				throw error;
+			}
+			setIsLoading(false);
+		},
+		[authService]
+	);
+
+	const logout = useCallback(async () => {
+		setIsLoading(true);
+		try {
+			await authService.logout();
+			setCurrentUser(null);
+			setIsAuthenticated(false);
+		} catch (error) {
+			console.error("Logout error:", error);
+			throw error;
+		}
+		setIsLoading(false);
+	}, [authService]);
+
+	const getCurrentUser = useCallback(async () => {
+		setIsLoading(true);
+		try {
+			const response = await authService.getCurrentUser();
+			if (response) {
+				setCurrentUser(response);
+				setIsAuthenticated(true);
+			} else {
+				setIsAuthenticated(false);
+			}
+		} catch (error) {
+			setIsAuthenticated(false);
+			console.error("Error fetching current user:", error);
+		}
+		setIsLoading(false);
+	}, [authService]);
+
+	useEffect(() => {
+		getCurrentUser();
+	}, [getCurrentUser]);
+
+	const contextValue = useMemo(
+		() => ({
+			currentUser,
+			isAuthenticated,
+			isLoading,
+			login,
+			logout,
+			register,
+			getCurrentUser,
+		}),
+		[
+			currentUser,
+			isAuthenticated,
+			isLoading,
+			login,
+			logout,
+			register,
+			getCurrentUser,
+		]
+	);
+
+	return (
+		<AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
+	);
+};
+
+AuthProvider.propTypes = {
+	children: PropTypes.node.isRequired,
+};
