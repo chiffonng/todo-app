@@ -50,7 +50,8 @@ class Login(Resource):
 
             # if user exists and password is correct
             if user and user.is_password_correct(password):
-                login_user(user)
+                login_user(user, remember=True)
+                print(user)
                 return {"message": "Login succeeded", "user": user.to_dict()}, 200
             else:
                 return {"message": "Invalid username or password"}, 401

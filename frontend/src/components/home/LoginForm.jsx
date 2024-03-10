@@ -16,14 +16,18 @@ import IconButton from "@mui/material/IconButton";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Typography from "@mui/material/Typography";
-import useAuth from "../../hooks/useAuth";
+import Alert from "@mui/material/Alert";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 import { ROUTES } from "../../utils/constants";
 
 const LoginForm = () => {
+	const navigate = useNavigate();
 	const { login } = useAuth();
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
+	const [errorMessage, setErrorMessage] = useState("");
 
 	const handleClickShowPassword = () =>
 		setShowPassword((prevShowPassword) => !prevShowPassword);
@@ -31,19 +35,34 @@ const LoginForm = () => {
 	const handleMouseDownPassword = (event) => {
 		event.preventDefault();
 	};
+
+	// Validate form fields
+	const isFormValid = () => {
+		if (!username || !password) {
+			setErrorMessage("All fields are required");
+			return false;
+		}
+		return true;
+	};
+
 	const handleSubmit = async (event) => {
 		event.preventDefault();
+		setErrorMessage(""); // Reset error message
+
+		if (!isFormValid()) {
+			return;
+		}
+
 		try {
 			const response = await login(username, password);
-			if (response.error) {
-				// Handle error here
-				console.log(response.error);
+			if (response && response.error) {
+				setErrorMessage(response.error);
 			} else {
-				// Handle successful login here
-				console.log("Logged in successfully");
+				// Redirect to home page
+				navigate("/");
 			}
 		} catch (error) {
-			// Handle exception here
+			setErrorMessage("An error occurred. Please try again later.");
 			console.log(error);
 		}
 	};
@@ -66,6 +85,11 @@ const LoginForm = () => {
 					mx: "auto", // Horizontally centers the Paper component in its Grid container
 				}}
 			>
+				{errorMessage && (
+					<Alert severity="error" sx={{ mb: 2 }}>
+						{errorMessage}
+					</Alert>
+				)}
 				<Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
 					<LockOutlinedIcon />
 				</Avatar>

@@ -10,7 +10,7 @@ from backend.app import db, login_manager
 
 
 @login_manager.user_loader
-def load_user(id):
+def load_user(user_id):
     return db.session.get(User, user_id)
 
 
@@ -84,16 +84,11 @@ class TaskList(db.Model):
 
     def to_dict(self):
         """Add top-level tasks to the list"""
-        # Trigger loading of tasks if they are lazy-loaded
-        sections = (
-            self.sections.all() if hasattr(self.sections, "all") else self.sections
-        )
 
         return {
             "id": self.id,
             "name": self.name,
             "user_id": self.user_id,
-            "sections": [section.to_dict() for section in sections],
         }
 
 

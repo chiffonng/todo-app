@@ -46,6 +46,9 @@ export default function RegisterForm() {
 		if (!username || !password || !confirmPassword) {
 			setErrorMessage("All fields are required");
 			return false;
+		} else if (password.length < 6) {
+			setErrorMessage("Password must be at least 6 characters long");
+			return false;
 		} else if (password !== confirmPassword) {
 			setErrorMessage("Passwords do not match");
 			return false;
