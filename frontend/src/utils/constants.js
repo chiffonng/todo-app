@@ -23,8 +23,10 @@ export const TASK_ENDPOINTS = {
 	CREATE_TASK: (listId) => `${API_BASE_URL}/lists/${listId}/tasks`,
 	EDIT_TASK: (listId, taskId) =>
 		`${API_BASE_URL}/lists/${listId}/tasks/${taskId}/edit`,
-	MOVE_TASK: (listId, taskId) =>
-		`${API_BASE_URL}/lists/${listId}/tasks/${taskId}/move`,
+	MOVE_TO_NEW_LIST: (listId, taskId) =>
+		`${API_BASE_URL}/lists/${listId}/tasks/${taskId}/move-list`,
+	MOVE_TO_NEW_PARENT: (listId, taskId) =>
+		`${API_BASE_URL}/lists/${listId}/tasks/${taskId}/move-parent`,
 	UPDATE_TASK_STATUS: (listId, taskId) =>
 		`${API_BASE_URL}/lists/${listId}/tasks/${taskId}/status`,
 	DELETE_TASK: (listId, taskId) =>

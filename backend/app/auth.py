@@ -13,6 +13,7 @@ from .uri import (
     LOGOUT_ENDPOINT,
     REGISTER_ENDPOINT,
 )
+from .utils import standardize_response
 
 auth_ns = api.namespace("auth", description="User authentication", path=AUTH_ENDPOINT)
 
@@ -52,11 +53,15 @@ class Login(Resource):
             # if user exists and password is correct
             if user and user.is_password_correct(password):
                 login_user(user, remember=True)
-                return {"message": "Successful login", "user": user.to_dict()}, 200
+                return standardize_response(
+                    "Successfully logged in",
+                    200,
+                    {"username": user.username, "id": user.id},
+                )
             else:
-                return {"message": "Invalid username or password"}, 401
+                return standardize_response("Invalid username or password", 401)
         except Exception as e:
-            return {"message": f"Failed to log in. Error: {e}"}, 500
+            return standardize_response(f"Failed to log in. Error: {e}", 500)
 
 
 @auth_ns.route(REGISTER_ENDPOINT)
@@ -74,19 +79,23 @@ class Register(Resource):
             query_user = db.select(User).filter_by(username=username)
             user_exists = db.session.execute(query_user).scalar_one_or_none()
             if user_exists or IntegrityError:
-                return {"message": "User already exists"}, 400
+                return standardize_response(
+                    "Username already exists. Please choose a different one", 400
+                )
 
             new_user = User(username=username, password=password)
             db.session.add(new_user)
             db.session.commit()
 
-            return {
-                "message": "Successfully created a new user",
-            }, 201
+            return standardize_response(
+                "Successfully created a new user",
+                201,
+                new_user.to_dict(),
+            )
 
         except Exception as e:
             db.session.rollback()
-            return {"message": f"Failed to create a new user. Error: {e}"}, 500
+            return standardize_response(f"Failed to create a new user. Error: {e}", 500)
 
 
 @auth_ns.route(LOGOUT_ENDPOINT)
@@ -99,6 +108,6 @@ class Logout(Resource):
 
         try:
             logout_user()
-            return {"message": "Successfully logged out"}, 200
+            return standardize_response("Successfully logged out", 200)
         except Exception as e:
-            return {"message": f"Failed to log out. Error: {e}"}, 500
+            return standardize_response(f"Failed to log out. Error: {e}", 500)

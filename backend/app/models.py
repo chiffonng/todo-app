@@ -121,6 +121,7 @@ class Task(db.Model):
     task_list: so.Mapped["TaskList"] = so.relationship(back_populates="tasks")
 
     # self-referential relationship to create a tree of tasks
+    # delete subtasks when a task is deleted
     subtasks: so.Mapped[List["Task"]] = so.relationship(
         backref=so.backref("parent", remote_side=[id]),
         lazy="selectin",
@@ -142,3 +143,33 @@ class Task(db.Model):
             return 0
         else:
             return self.parent.calculate_depth() + 1
+
+    def mark_completed(self):
+        self.is_completed = True
+        for subtask in self.subtasks:
+            subtask.mark_completed()
+
+    def is_descendant_of(self, potential_parent):
+        current = self.parent
+        while current:
+            if current.id == potential_parent.id:
+                return True
+            current = current.parent
+        return False
+
+    def move_to_parent(self, new_parent):
+        """Move a task to a new parent task.
+        Recalculate the depth of the task and its subtasks.
+        """
+        if self.is_descendant_of(new_parent):
+            raise ValueError("Cannot move a task under its descendant.")
+        self.parent = new_parent
+        self.calculate_depth()
+
+    def move_to_list(self, new_list_id):
+        """Recursively move a task and its subtasks to a new list."""
+        self.list_id = new_list_id
+        self.parent_id = None
+        self.depth = 0
+        for subtask in self.subtasks:
+            subtask.move_to_list(new_list_id)
