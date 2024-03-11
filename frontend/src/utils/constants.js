@@ -53,9 +53,8 @@ export const ACTIONS = {
 };
 
 export const ROUTES = {
-	HOME: "/",
 	LOGIN: "/login",
 	REGISTER: "/register",
-	MAIN: "/lists/all",
+	MAIN: "/",
 	CURRENT_LIST: (listId) => `/lists/${listId}`,
 };
