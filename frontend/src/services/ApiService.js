@@ -105,4 +105,22 @@ export default class ApiService {
 	delete(url, options = {}) {
 		return this.request({ ...options, method: "DELETE", url });
 	}
+
+	/**
+	 * Wrapper for standardize response handling.
+	 * @param {Promise<object>} responsePromise - A promise that resolves to the response object.
+	 * @returns {Promise<object>} - A promise that resolves to the response data, or rejects with an error message.
+	 */
+	async handleResponse(responsePromise) {
+		try {
+			const response = await responsePromise;
+			if (!response.ok) {
+				throw new Error(response.body.message || "An error occurred");
+			}
+			return response.body.data || response.body.message;
+		} catch (error) {
+			const message = "Internal Server Error. Please try again later.";
+			return Promise.reject(message);
+		}
+	}
 }

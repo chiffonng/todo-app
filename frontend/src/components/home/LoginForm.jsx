@@ -23,7 +23,7 @@ import { ROUTES } from "../../utils/constants";
 
 const LoginForm = () => {
 	const navigate = useNavigate();
-	const { login, isAuthenticated, getCurrentUser } = useAuth();
+	const { login } = useAuth();
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);

@@ -1,11 +1,8 @@
 import React from "react";
 import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
-import { useAuth } from "../../contexts/AuthContext";
 import { ROUTES } from "../../utils/constants";
 
-export default function Navbar() {
-	const { currentUser, isAuthenticated, logout } = useAuth();
-
+export default function Navbar(currentUser, logout) {
 	return (
 		<AppBar
 			position="static"
@@ -17,7 +14,7 @@ export default function Navbar() {
 				<Typography variant="h6" sx={{ flexGrow: 1 }}>
 					Just Do
 				</Typography>
-				{!isAuthenticated ? (
+				{!currentUser ? (
 					<Box sx={{ "& > *": { ml: 6 } }}>
 						{/* Apply margin between children */}
 						<Button color="inherit" variant="outlined" href={ROUTES.REGISTER}>
@@ -32,7 +29,7 @@ export default function Navbar() {
 						<Typography variant="subtitle1" sx={{ marginRight: 2 }}>
 							{currentUser.username}
 						</Typography>
-						<Button color="inherit" onClick={logout}>
+						<Button color="primary" variant="contained" onClick={logout}>
 							Logout
 						</Button>
 					</Box>

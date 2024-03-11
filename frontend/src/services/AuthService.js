@@ -2,8 +2,8 @@ import { AUTH_ENDPOINTS } from "../utils/constants";
 import ApiService from "./ApiService";
 
 /**
- * AuthService class for handling authentication-related API calls.
- * Extends ApiService to utilize common HTTP request functionalities.
+ * @exports AuthService class for handling authentication-related API calls.
+ * @extends ApiService to utilize common HTTP request functionalities.
  * Using ApiService, response is standardized to { ok: boolean, status: number, body: object }. body has { message: string, data: object } from the backend.
  */
 export default class AuthService extends ApiService {
@@ -15,22 +15,9 @@ export default class AuthService extends ApiService {
 	 * @returns {Promise<object>} - A promise that resolves to the response object.
 	 */
 	async login(username, password) {
-		try {
-			const response = await this.post(AUTH_ENDPOINTS.LOGIN, {
-				username,
-				password,
-			});
-
-			if (response.ok) {
-				return response.body.data ? response.body.data : response.body.message;
-			} else {
-				throw new Error(response.body.message);
-			}
-		} catch (error) {
-			// Handle any errors that occur during the request
-			console.error("Login error:", error);
-			throw error;
-		}
+		return this.handleResponse(
+			this.post(AUTH_ENDPOINTS.LOGIN, { username, password })
+		);
 	}
 
 	/**
@@ -41,41 +28,18 @@ export default class AuthService extends ApiService {
 	 * @returns {Promise<object>} - A promise that resolves to the response object.
 	 */
 	async register(username, password) {
-		try {
-			const response = await this.post(AUTH_ENDPOINTS.REGISTER, {
-				username,
-				password,
-			});
-			if (response.ok) {
-				return response.body.data ? response.body.data : response.body.message;
-			} else {
-				throw new Error(response.body.message);
-			}
-		} catch (error) {
-			// Handle any errors that occur during the request
-			console.error("Register error:", error);
-			throw error;
-		}
+		return this.handleResponse(
+			this.post(AUTH_ENDPOINTS.REGISTER, { username, password })
+		);
 	}
 
 	/**
 	 * Log out the current user asynchronously.
 	 *
-	 * @returns {Promise<string>} - A promise that resolves to the logout message.
+	 * @returns {Promise<object>} - A promise that resolves to the logout message.
 	 */
 	async logout() {
-		try {
-			const response = await this.post(AUTH_ENDPOINTS.LOGOUT);
-
-			if (response.ok) {
-				return response.body.message;
-			} else {
-				throw new Error(response.body.message);
-			}
-		} catch (error) {
-			console.error("Logout error:", error);
-			return Promise.reject(error);
-		}
+		this.handleResponse(this.post(AUTH_ENDPOINTS.LOGOUT));
 	}
 
 	/**
@@ -84,17 +48,6 @@ export default class AuthService extends ApiService {
 	 * @returns {Promise<object>} - A promise that resolves to the current user data.
 	 */
 	async getCurrentUser() {
-		try {
-			const response = await this.get(AUTH_ENDPOINTS.CURRENT_USER);
-
-			if (response.ok) {
-				return response.body.data;
-			} else {
-				throw new Error(response.body.message);
-			}
-		} catch (error) {
-			console.error("Get current user error:", error);
-			return Promise.reject(error);
-		}
+		return this.handleResponse(this.get(AUTH_ENDPOINTS.GET_CURRENT_USER));
 	}
 }
