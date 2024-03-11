@@ -1,21 +1,29 @@
 import React from "react";
 import { Box } from "@mui/material";
+import ListName from "../list/ListName";
 import AddTaskForm from "./AddTaskForm";
-import NestedTasks from "./NestedTasks";
+import TaskHierarchy from "./TaskHierarchy";
 
-const TaskLayout = ({ tasks }) => {
-	// TODO: Wrap List Context
+import PropTypes from "prop-types";
+
+const TaskLayout = ({ currentListId }) => {
+	const { currentListId, fetchListById } = useLists();
+
 	const handleAddTask = (newTask) => {
-		// TODO: Logic to add a new task
-		console.log(newTask);
+		createTask(newTask);
 	};
 
 	return (
 		<Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+			<ListName name={currentList?.name} />
 			<AddTaskForm onAddTask={handleAddTask} />
-			<NestedTasks tasks={tasks} />
+			<TaskHierarchy tasks={tasks} />
 		</Box>
 	);
+};
+
+TaskLayout.propTypes = {
+	currentListId: PropTypes.number.isRequired,
 };
 
 export default TaskLayout;
