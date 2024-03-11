@@ -3,10 +3,12 @@ from typing import List, Optional, Set
 
 import sqlalchemy as sa  # database functions
 import sqlalchemy.orm as so
+from sqlalchemy.ext.hybrid import hybrid_property
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from backend.app import db
+
 
 class User(UserMixin, db.Model):
     """
@@ -133,17 +135,20 @@ class Task(db.Model):
         }
 
     def calculate_depth(self):
+        """Calculate the depth of the task in the tree. A top-level task has a depth of 0."""
         if self.parent_id is None:
             return 0
         else:
             return self.parent.calculate_depth() + 1
 
     def mark_completed(self):
+        """Mark a task as completed and recursively mark its subtasks as completed."""
         self.is_completed = True
         for subtask in self.subtasks:
             subtask.mark_completed()
 
     def is_descendant_of(self, potential_parent):
+        """Check if a task is a descendant of another task."""
         current = self.parent
         while current:
             if current.id == potential_parent.id:

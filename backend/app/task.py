@@ -279,26 +279,28 @@ class EditTask(Resource):
             return standardize_response(f"Failed to update task. Error: {e}", 500)
 
 
-move_task_parser = task_ns.parser()
-move_task_parser.add_argument(
+list_migration_parser = task_ns.parser()
+list_migration_parser.add_argument(
     "new_list_id", required=True, type=int, help="New List ID"
 )
-move_task_parser.add_argument(
-    "new_parent_id", type=int, help="New Parent Task ID", required=False
+
+parent_migration_parser = task_ns.parser()
+parent_migration_parser.add_argument(
+    "new_parent_id", type=int, help="New Parent ID", default=None
 )
 
 
 @task_ns.route(TASK_MOVE_PARENT_ENDPOINT)
 class MoveTaskToNewParent(Resource):
     @login_required
-    @task_ns.expect(move_task_parser)
+    @task_ns.expect(parent_migration_parser)
     @task_ns.response(200, "Task successfully moved")
     @task_ns.response(400, "Invalid new parent")
     @task_ns.response(404, "Task or new parent not found")
     @task_ns.response(500, "Failed to move the task")
     def put(self, task_id: int):
         """Move a task to a new parent"""
-        args = move_task_parser.parse_args()
+        args = parent_migration_parser.parse_args()
         new_parent_id = args.get("new_parent_id")
 
         # Check if the task exists
@@ -339,14 +341,14 @@ class MoveTaskToNewParent(Resource):
 @task_ns.route(TASK_MOVE_LIST_ENDPOINT)
 class MoveTaskToNewList(Resource):
     @login_required
-    @task_ns.expect(move_task_parser)
+    @task_ns.expect(list_migration_parser)
     @task_ns.response(200, "Task successfully moved")
-    @task_ns.response(404, "Invalid list ID or task ID")
-    @task_ns.response(400, "New list ID not found")
+    @task_ns.response(404, "List ID or task ID not found")
+    @task_ns.response(400, "Invalid new list ID")
     @task_ns.response(500, "Failed to move the task")
     def put(self, list_id: int, task_id: int):
         """Move a task and its descendents to a new list."""
-        args = move_task_parser.parse_args()
+        args = list_migration_parser.parse_args()
         new_list_id = args.get("new_list_id")
 
         # Check if the current list exists
