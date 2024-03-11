@@ -10,18 +10,25 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import TextField from "@mui/material/TextField";
 import PropTypes from "prop-types";
-import TaskMenu from "./TaskMenuDialog";
+import TaskActionsDialog from "./TaskActionsDialog";
 
-function TaskItem({ task, index, onToggleSubtasks, subtasksVisible }) {
+function TaskItem({
+	task,
+	index,
+	onToggleSubtasks,
+	subtasksVisible,
+	onEditTask,
+	onToggleTaskCompletion,
+	onAddSubtask,
+	onDeleteTask,
+	onMoveTask,
+}) {
 	const [anchorEl, setAnchorEl] = useState(null);
 	const [text, setText] = useState(task.name);
-	const [isCompleted, setIsCompleted] = useState(task.isCompleted);
 	const open = Boolean(anchorEl);
 
-	const handleToggle = () => {
-		setIsCompleted(!isCompleted);
-		// TODO: Implement task completion toggle functionality in your application state
-		console.log(`Toggled task ${task.id}: ${!isCompleted}`);
+	const handleToggleStatus = () => {
+		onToggleTaskCompletion(task.id); // Updated to use a passed function
 	};
 
 	const handleClickMenu = (event) => {
@@ -34,16 +41,24 @@ function TaskItem({ task, index, onToggleSubtasks, subtasksVisible }) {
 
 	const handleEditTask = (event) => {
 		setText(event.target.value);
-		// TODO: Implement text update
+		onEditTask(task.id, event.target.value);
 	};
 
-	// TODO: These handlers would trigger the functionality passed from the parent component
-	const handleAddSubtask = () => console.log("Add subtask");
-	const handleDeleteTask = () => console.log("Delete task");
-	const handleMoveTask = () => console.log("Move task");
+	// Handlers will now invoke the functions passed from the parent component
+	const handleDeleteTask = () => {
+		onDeleteTask(task.id); //
+	};
+
+	const handleAddSubtask = () => {
+		onAddSubtask(task.id);
+	};
+
+	const handleMoveTask = () => {
+		onMoveTask(task.id);
+	};
 
 	// This handler will be invoked when the expand/collapse icon is clicked
-	const handleToggleSubtasks = () => {
+	const handleToggleSubtasksClick = () => {
 		onToggleSubtasks(task.id);
 	};
 
@@ -61,10 +76,10 @@ function TaskItem({ task, index, onToggleSubtasks, subtasksVisible }) {
 					</ListItemIcon>
 					<Checkbox
 						edge="start"
-						checked={isCompleted}
+						checked={task.isCompleted}
 						tabIndex={-1}
 						disableRipple
-						onChange={handleToggle}
+						onChange={handleToggleStatus}
 					/>
 					<TextField
 						fullWidth
@@ -76,21 +91,21 @@ function TaskItem({ task, index, onToggleSubtasks, subtasksVisible }) {
 						}}
 					/>
 					{task.subtasks && task.subtasks.length > 0 && (
-						<IconButton onClick={handleToggleSubtasks}>
+						<IconButton onClick={handleToggleSubtasksClick}>
 							{subtasksVisible ? <ExpandLessIcon /> : <ExpandMoreIcon />}
 						</IconButton>
 					)}
 					<IconButton edge="end" aria-label="more" onClick={handleClickMenu}>
 						<MoreVertIcon />
 					</IconButton>
-					<TaskMenu
+					<TaskActionsDialog
 						anchorEl={anchorEl}
 						open={open}
 						handleClose={handleCloseMenu}
 						handleAddSubtask={handleAddSubtask}
 						handleDeleteTask={handleDeleteTask}
 						handleMoveTask={handleMoveTask}
-						depth={0} // TODO: Replace with actual depth value if necessary
+						depth={task.depth}
 					/>
 				</ListItem>
 			)}
@@ -103,11 +118,17 @@ TaskItem.propTypes = {
 		id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 		name: PropTypes.string.isRequired,
 		isCompleted: PropTypes.bool.isRequired,
-		subtasks: PropTypes.array, // You might have subtasks as part of your task object
+		depth: PropTypes.number.isRequired,
+		subtasks: PropTypes.array,
 	}).isRequired,
 	index: PropTypes.number.isRequired,
-	onToggleSubtasks: PropTypes.func, // Added prop for toggle subtasks
-	subtasksVisible: PropTypes.bool, // Added prop to indicate if subtasks are visible
+	onToggleSubtasks: PropTypes.func.isRequired,
+	subtasksVisible: PropTypes.bool,
+	onEditTask: PropTypes.func.isRequired,
+	onToggleTaskCompletion: PropTypes.func.isRequired,
+	onAddSubtask: PropTypes.func.isRequired,
+	onDeleteTask: PropTypes.func.isRequired,
+	onMoveTask: PropTypes.func.isRequired,
 };
 
 export default TaskItem;

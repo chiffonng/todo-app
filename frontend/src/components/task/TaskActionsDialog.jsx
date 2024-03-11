@@ -8,7 +8,7 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
 
-const TaskMenu = ({
+const TaskActionsDialog = ({
 	anchorEl,
 	open,
 	handleClose,
@@ -17,9 +17,9 @@ const TaskMenu = ({
 	handleMoveTask,
 	depth,
 }) => {
-	const handleMenuClick = (action) => {
-		handleClose(); // close the menu
-		action(); // then perform the action
+	const handleMenuAction = (action) => () => {
+		handleClose();
+		action();
 	};
 	return (
 		<Menu
@@ -29,46 +29,45 @@ const TaskMenu = ({
 			slotProps={{
 				paper: {
 					style: {
-						maxHeight: "48px * 4.5",
+						maxHeight: 48 * 4.5,
 						width: "20ch",
 					},
 				},
 			}}
 		>
-			<MenuItem onClick={() => handleMenuClick(handleAddSubtask)}>
+			<MenuItem onClick={handleMenuAction(handleAddSubtask)}>
 				<ListItemIcon>
 					<AddIcon fontSize="small" />
 				</ListItemIcon>
 				<ListItemText>Add subtask</ListItemText>
 			</MenuItem>
-			<MenuItem onClick={() => handleMenuClick(handleDeleteTask)}>
+			<MenuItem onClick={handleMenuAction(handleDeleteTask)}>
 				<ListItemIcon>
 					<DeleteOutlineIcon fontSize="small" />
 				</ListItemIcon>
 				<ListItemText>Delete task</ListItemText>
 			</MenuItem>
-			{/* Conditionally render the Move task option based on depth */}
+			{/* Conditionally rendering move task on the top-level task only */}
 			{depth === 0 && (
-				<MenuItem onClick={() => handleMenuClick(handleMoveTask)}>
+				<MenuItem onClick={handleMenuAction(handleMoveTask)}>
 					<ListItemIcon>
 						<DriveFileMoveOutlinedIcon fontSize="small" />
 					</ListItemIcon>
-					<ListItemText>Move task </ListItemText>
+					<ListItemText>Move task</ListItemText>
 				</MenuItem>
 			)}
 		</Menu>
 	);
 };
 
-TaskMenu.propTypes = {
+TaskActionsDialog.propTypes = {
 	anchorEl: PropTypes.any,
 	open: PropTypes.bool.isRequired,
 	handleClose: PropTypes.func.isRequired,
 	handleAddSubtask: PropTypes.func.isRequired,
-	handleEditTask: PropTypes.func.isRequired,
 	handleDeleteTask: PropTypes.func.isRequired,
 	handleMoveTask: PropTypes.func.isRequired,
 	depth: PropTypes.number.isRequired,
 };
 
-export default TaskMenu;
+export default TaskActionsDialog;
